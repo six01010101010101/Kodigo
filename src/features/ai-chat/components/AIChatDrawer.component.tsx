@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Bot, Sparkles } from 'lucide-react';
 import { ChatMessage } from '../ai-chat.types';
 import { aiChatService } from '../ai-chat.service';
 import { PythoMascot } from '../../mascot/components/PythoMascot.component';
 import { soundService } from '../../../services/sound.service';
+import { formatRelativeTime } from '../../../utils/time.utils';
 
 interface AIChatDrawerProps {
   isOpen: boolean;
@@ -14,8 +15,8 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 'init_1',
     sender: 'pytho',
-    text: 'Sssss! Olá, eu sou o Pytho, sua cobra mentora de programação! Tem alguma dúvida sobre HTML, CSS, JavaScript, Python ou C++?',
-    timestamp: 'Agora'
+    text: 'Sssss! Olá, eu sou o Pytho IA, seu mentor de programação! O que vamos codar ou estudar hoje?',
+    createdAt: Date.now()
   }
 ];
 
@@ -23,6 +24,25 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [, setTick] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom whenever messages or loading state change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom();
+    }
+  }, [messages, loading, isOpen]);
+
+  // Periodic tick to refresh relative timestamps (e.g. "agora" -> "há 1 minuto")
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -35,7 +55,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
       id: `usr_${Date.now()}`,
       sender: 'user',
       text: textToSend,
-      timestamp: 'Agora'
+      createdAt: Date.now()
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -47,7 +67,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
       soundService.playCorrect();
       setMessages((prev) => [...prev, reply]);
     } catch {
-      // Error handled silently
+      // Handled silently
     } finally {
       setLoading(false);
     }
@@ -71,7 +91,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
                 <span>Pytho IA</span>
                 <Sparkles className="w-4 h-4 text-duo-yellow-dark" />
               </h3>
-              <p className="text-[11px] text-duo-green font-bold">Online • Mentor de Código</p>
+              <p className="text-[11px] text-duo-green font-bold">Online • Powered by Gemini Pro</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 text-duo-gray hover:text-duo-charcoal dark:hover:text-white">
@@ -79,7 +99,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
           </button>
         </div>
 
-        {/* Message List */}
+        {/* Message List with Auto-Scroll */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((msg) => (
             <div
@@ -100,16 +120,21 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
                   </pre>
                 )}
               </div>
-              <span className="text-[10px] text-duo-gray mt-1 px-1">{msg.timestamp}</span>
+              <span className="text-[10px] text-duo-gray mt-1 px-1">
+                {msg.sender === 'user' ? `Enviado ${formatRelativeTime(msg.createdAt)}` : formatRelativeTime(msg.createdAt)}
+              </span>
             </div>
           ))}
 
           {loading && (
             <div className="flex items-center gap-2 text-xs font-bold text-duo-gray">
               <Bot className="w-4 h-4 animate-spin text-duo-green" />
-              <span>Pytho está digitando uma explicação...</span>
+              <span>Pytho IA está pensando...</span>
             </div>
           )}
+
+          {/* Invisible target for auto-scrolling */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Suggestion Chips */}
@@ -136,7 +161,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
           >
             <input
               type="text"
-              placeholder="Tire uma dúvida com o Pytho..."
+              placeholder="Tire uma dúvida com o Pytho IA..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               className="flex-1 px-4 py-2.5 rounded-2xl border-2 border-duo-border dark:border-slate-700 bg-duo-bg-light dark:bg-slate-800 text-xs font-bold text-duo-charcoal dark:text-white focus:outline-none focus:border-duo-green"

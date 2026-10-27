@@ -2,7 +2,7 @@ export interface ChatMessage {
   id: string;
   sender: 'user' | 'pytho';
   text: string;
-  timestamp: string;
+  createdAt: number;
   codeSnippet?: string;
 }
 

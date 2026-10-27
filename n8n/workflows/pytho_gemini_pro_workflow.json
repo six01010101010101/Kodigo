@@ -1,0 +1,98 @@
+{
+  "name": "Kodigo - Pytho IA Gemini Pro Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kodigo-ai-tutor",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook Kodigo App",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.prompt }}",
+        "systemMessage": "Você é o Pytho IA, o mentor de programação oficial do Kodigo. Responda exclusivamente a dúvidas de programação (Full Stack, HTML, CSS, JavaScript, TypeScript, React, Python, C++, SQL e Git). Se o usuário disser 'oi' ou cumprimentar, seja amigável e pergunte o que vão codar. Se falar de estados físicos ou emocionais (tristeza, fome, cansaço, etc.), responda com empatia e lembre-o de que você é uma IA focada exclusivamente em programação. Responda sempre em JSON válido com as chaves 'reply' (texto) e 'codeSnippet' (código opcional)."
+      },
+      "id": "agent-node",
+      "name": "Pytho AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-pro-latest",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "gemini-pro-model",
+      "name": "Google Gemini Pro (kenkobayashi2005@gmail.com)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [480, 520],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gemini-pro-creds",
+          "name": "Google Gemini Pro Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.output }}"
+      },
+      "id": "respond-node",
+      "name": "Respond to Kodigo Web",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Kodigo App": {
+      "main": [
+        [
+          {
+            "node": "Pytho AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Pro (kenkobayashi2005@gmail.com)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Pytho AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pytho AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Kodigo Web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -4,11 +4,17 @@ class AIChatService {
   private n8nWebhookUrl = 'http://localhost:5678/webhook/kodigo-ai-tutor';
 
   async askPytho(prompt: string): Promise<ChatMessage> {
+    // 1. Try N8N Webhook connected to Gemini Pro
     try {
       const response = await fetch(this.n8nWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, timestamp: new Date().toISOString() })
+        body: JSON.stringify({
+          prompt,
+          user: 'kenkobayashi2005@gmail.com',
+          model: 'gemini-1.5-pro',
+          timestamp: new Date().toISOString()
+        })
       });
       if (response.ok) {
         const data = (await response.json()) as { reply: string; codeSnippet?: string };
@@ -17,7 +23,7 @@ class AIChatService {
           sender: 'pytho',
           text: data.reply,
           codeSnippet: data.codeSnippet,
-          timestamp: 'Agora'
+          createdAt: Date.now()
         };
       }
     } catch {
@@ -32,24 +38,17 @@ class AIChatService {
     let text = '';
     let codeSnippet: string | undefined;
 
-    // 1. Greetings
     if (/^(oi|olá|ola|opa|hello|hey)\b/.test(raw)) {
       text = 'Oi! Que alegria ter você aqui por perto! O que vamos programar hoje?';
-    } 
-    // 2. Politeness check
-    else if (raw.includes('tudo bem') || raw.includes('como vai') || raw.includes('como você está') || raw.includes('como vc esta')) {
+    } else if (raw.includes('tudo bem') || raw.includes('como vai') || raw.includes('como você está') || raw.includes('como vc esta')) {
       text = 'Comigo está tudo ótimo, sistemas 100% operacionais e pronto para compilar ideias! E você, pronto para codar?';
-    }
-    // 3. Emotional or Physical States Boundary
-    else if (
+    } else if (
       raw.includes('mal') || raw.includes('triste') || raw.includes('enjoado') || 
       raw.includes('fome') || raw.includes('feliz') || raw.includes('dor') || 
       raw.includes('cansado') || raw.includes('desanimado') || raw.includes('chateado')
     ) {
       text = 'Fico feliz por você conversar comigo e compartilhar como está se sentindo! Mas lembre-se: eu sou apenas uma IA, o seu mentor de código no Kodigo. Meu foco é te ajudar nas suas dificuldades e aprendizado de programação (Full Stack, Python, C++, JS, TS e banco de dados). Cuide de você, respire um pouco e, quando estiver pronto para ver códigos, me chame!';
-    }
-    // 4. Programming specific topics
-    else if (raw.includes('git') || raw.includes('commit') || raw.includes('branch')) {
+    } else if (raw.includes('git') || raw.includes('commit') || raw.includes('branch')) {
       text = 'No Git profissional, organize seu trabalho com commits semânticos e comandos modernos:';
       codeSnippet = `git switch -c feature/nova-tela\ngit add .\ngit commit -m "feat: adicionar validacao de dados"\ngit push -u origin feature/nova-tela`;
     } else if (raw.includes('html') || raw.includes('tag') || raw.includes('semant')) {
@@ -79,7 +78,7 @@ class AIChatService {
       sender: 'pytho',
       text,
       codeSnippet,
-      timestamp: 'Agora'
+      createdAt: Date.now()
     };
   }
 }
