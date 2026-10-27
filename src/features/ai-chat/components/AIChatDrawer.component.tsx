@@ -79,7 +79,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
     }
   };
 
-  const suggestions = ['Oi, tudo bem?', 'Estou bem!', 'Estou meio triste hoje...', 'Exemplo de função Python'];
+  const suggestions = ['Oi, tudo bem?', 'Que horas são agora?', 'Estou bem!', 'Exemplo de função Python'];
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-end">
@@ -92,7 +92,10 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
                 <span>Pytho IA</span>
                 <Sparkles className="w-4 h-4 text-duo-yellow-dark" />
               </h3>
-              <p className="text-[11px] text-duo-green font-bold">Online • Gemini Pro (cobaloficial1@gmail.com)</p>
+              <p className="text-[11px] text-duo-green font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-duo-green animate-pulse" />
+                <span>Pytho Online</span>
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1">

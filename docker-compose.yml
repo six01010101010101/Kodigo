@@ -14,7 +14,7 @@ services:
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=America/Sao_Paulo
-      - GEMINI_USER_ACCOUNT=cobaloficial1@gmail.com
+      - GEMINI_USER_ACCOUNT=kobaofc1@gmail.com
       - N8N_AI_ACTIVE=true
     volumes:
       - n8n_data:/home/node/.n8n

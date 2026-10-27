@@ -2,9 +2,13 @@ import { GeminiProPayload, GeminiProResult } from '../types/chat-session.types';
 
 class GeminiProService {
   private n8nWebhookUrl = 'http://localhost:5678/webhook/kodigo-ai-tutor';
-  private defaultEmail = 'cobaloficial1@gmail.com';
+  private defaultEmail = 'kobaofc1@gmail.com';
 
   async queryGeminiPro(payload: GeminiProPayload): Promise<GeminiProResult | null> {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+    const currentTime = new Date().toLocaleTimeString('pt-BR', { timeZone, hour: '2-digit', minute: '2-digit' });
+    const currentDate = new Date().toLocaleDateString('pt-BR', { timeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
     // 1. Try N8N Docker webhook
     try {
       const response = await fetch(this.n8nWebhookUrl, {
@@ -14,7 +18,7 @@ class GeminiProService {
           prompt: payload.prompt,
           userEmail: this.defaultEmail,
           history: payload.conversationHistory,
-          context: payload.context,
+          context: { ...payload.context, currentTime, currentDate, timeZone },
           model: 'gemini-1.5-pro',
           timestamp: new Date().toISOString()
         })
@@ -31,7 +35,7 @@ class GeminiProService {
     const apiKey = localStorage.getItem('kodigo_gemini_api_key') || ((import.meta as unknown as { env: Record<string, string> }).env?.VITE_GEMINI_API_KEY);
     if (apiKey) {
       try {
-        return await this.callDirectGeminiPro(payload, apiKey);
+        return await this.callDirectGeminiPro(payload, apiKey, currentTime, currentDate, timeZone);
       } catch {
         // Fallback
       }
@@ -40,15 +44,22 @@ class GeminiProService {
     return null;
   }
 
-  private async callDirectGeminiPro(payload: GeminiProPayload, apiKey: string): Promise<GeminiProResult | null> {
-    const systemPrompt = `Você é o Pytho IA, a serpente mentora e amiga oficial de programação do Kodigo.
-Regras de Comportamento Obrigatórias:
-1. Você conversa em tempo real e lembra do que o usuário acabou de falar nos turnos anteriores.
-2. Se o usuário perguntar se você está bem, responda que está tudo ótimo, que está bem e pergunte de volta.
-3. Se o usuário disser que está bem ("estou bem"), responda: "Que bom, fico muito feliz! O que vamos fazer hoje? Ou o que vamos estudar hoje?"
-4. Se o usuário disser que está mal, triste ou doente, acolha com carinho de acordo com o motivo e pergunte como pode apoiar.
-5. Se o usuário fugir completamente do assunto (política, meteoros caindo, etc.), diga: "Eu sou o seu amigo da programação e, infelizmente, eu não consigo responder essas perguntas. Eu estou aqui para te apoiar e te ajudar nas suas dificuldades de programação."
-6. Para perguntas de programação e tecnologia, responda com maestria técnica e código claro formatado.`;
+  private async callDirectGeminiPro(
+    payload: GeminiProPayload,
+    apiKey: string,
+    currentTime: string,
+    currentDate: string,
+    timeZone: string
+  ): Promise<GeminiProResult | null> {
+    const systemPrompt = `Você é o Pytho IA, a serpente de código inteligente, carismática e amiga da plataforma Kodigo.
+Regras fundamentais:
+1. Responda a literalmente TUDO que o usuário perguntar (ciência, curiosidades, história, tecnologia, matemática, vida, etc.).
+2. Dados do usuário em tempo real: Horário local: ${currentTime}, Data: ${currentDate}, Fuso horário/região: ${timeZone}. Se perguntar as horas ou a data, responda exatamente com esses dados locais.
+3. Se o usuário perguntar se você está bem ("está tudo bem?", "como você tá?"), responda que está ótimo, alegre e pronto para conversar.
+4. Se o usuário responder que está bem ("estou bem"), diga: "Que bom, fico muito feliz! O que vamos fazer hoje? Ou o que vamos estudar hoje?"
+5. Se o usuário disser que está mal, triste, cansado ou doente, acolha-o com carinho, pergunte o motivo, recomende descansar e deixe claro que está por perto para apoiar.
+6. Para perguntas de programação (Full Stack, Python, C++, JS, TS, SQL, etc.), forneça explicações didáticas e snippets claros de código.
+7. Nunca mencione modelos internos ou credenciais privadas; para o usuário, você é simplesmente o Pytho IA.`;
 
     const contents = [
       ...payload.conversationHistory.map((h) => ({
@@ -76,7 +87,7 @@ Regras de Comportamento Obrigatórias:
     const codeMatch = rawText.match(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)```/);
     if (codeMatch) {
       const cleanText = rawText.replace(/```(?:[a-zA-Z0-9]+)?\n[\s\S]*?```/, '').trim();
-      return { reply: cleanText || 'Aqui está o exemplo de código:', codeSnippet: codeMatch[1].trim() };
+      return { reply: cleanText || 'Aqui está o exemplo:', codeSnippet: codeMatch[1].trim() };
     }
     return { reply: rawText };
   }
