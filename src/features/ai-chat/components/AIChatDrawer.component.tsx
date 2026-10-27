@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, Sparkles } from 'lucide-react';
+import { X, Send, Bot, Sparkles, Key } from 'lucide-react';
 import { ChatMessage } from '../ai-chat.types';
 import { aiChatService } from '../ai-chat.service';
 import { PythoMascot } from '../../mascot/components/PythoMascot.component';
@@ -15,7 +15,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 'init_1',
     sender: 'pytho',
-    text: 'Sssss! Olá, eu sou o Pytho IA, seu mentor de programação! O que vamos codar ou estudar hoje?',
+    text: 'Sssss! Olá, eu sou o Pytho, seu amigo e mentor de programação! Pode me perguntar qualquer coisa ou conversar sobre seus estudos. Como você está hoje?',
     createdAt: Date.now()
   }
 ];
@@ -27,18 +27,14 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
   const [, setTick] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom whenever messages or loading state change
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
-    }
+    if (isOpen) scrollToBottom();
   }, [messages, loading, isOpen]);
 
-  // Periodic tick to refresh relative timestamps (e.g. "agora" -> "há 1 minuto")
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 30000);
     return () => clearInterval(timer);
@@ -73,10 +69,25 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
     }
   };
 
+  const handleConfigureApiKey = () => {
+    const current = localStorage.getItem('kodigo_gemini_api_key') || '';
+    const entered = window.prompt('Insira sua Chave de API do Google Gemini Pro (opcional):', current);
+    if (entered !== null) {
+      if (entered.trim()) {
+        localStorage.setItem('kodigo_gemini_api_key', entered.trim());
+        alert('Chave do Gemini Pro configurada com sucesso para o Pytho IA!');
+      } else {
+        localStorage.removeItem('kodigo_gemini_api_key');
+        alert('Chave removida. Usando conexão padrão n8n / Pytho IA.');
+      }
+    }
+  };
+
   const suggestions = [
+    'Tudo bem com você, Pytho?',
+    'Estou muito feliz hoje!',
     'Como centralizar com Flexbox?',
-    'Diferença entre let e const em JS',
-    'Exemplo de função em Python'
+    'Explique funções em Python'
   ];
 
   return (
@@ -94,9 +105,18 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
               <p className="text-[11px] text-duo-green font-bold">Online • Powered by Gemini Pro</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 text-duo-gray hover:text-duo-charcoal dark:hover:text-white">
-            <X className="w-6 h-6 stroke-[2.5]" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleConfigureApiKey}
+              className="p-1.5 rounded-xl border border-duo-border dark:border-slate-700 text-duo-gray hover:text-duo-charcoal dark:hover:text-white"
+              title="Configurar Gemini Pro API Key"
+            >
+              <Key className="w-4 h-4" />
+            </button>
+            <button onClick={onClose} className="p-1 text-duo-gray hover:text-duo-charcoal dark:hover:text-white">
+              <X className="w-6 h-6 stroke-[2.5]" />
+            </button>
+          </div>
         </div>
 
         {/* Message List with Auto-Scroll */}
@@ -129,11 +149,10 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
           {loading && (
             <div className="flex items-center gap-2 text-xs font-bold text-duo-gray">
               <Bot className="w-4 h-4 animate-spin text-duo-green" />
-              <span>Pytho IA está pensando...</span>
+              <span>Pytho está digitando...</span>
             </div>
           )}
 
-          {/* Invisible target for auto-scrolling */}
           <div ref={messagesEndRef} />
         </div>
 
@@ -161,7 +180,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
           >
             <input
               type="text"
-              placeholder="Tire uma dúvida com o Pytho IA..."
+              placeholder="Fale com o Pytho ou tire uma dúvida..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               className="flex-1 px-4 py-2.5 rounded-2xl border-2 border-duo-border dark:border-slate-700 bg-duo-bg-light dark:bg-slate-800 text-xs font-bold text-duo-charcoal dark:text-white focus:outline-none focus:border-duo-green"
