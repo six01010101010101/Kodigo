@@ -32,38 +32,46 @@ class AIChatService {
     let text = '';
     let codeSnippet: string | undefined;
 
-    // Empathy and Conversational Responses
-    if (/^(oi|olá|ola|e aí|e ai|opa|hello|hey)\b/.test(raw)) {
-      text = 'Olá! Que alegria ver você por aqui! Como está seu dia e seus estudos hoje? Em que posso te ajudar?';
-    } else if (raw.includes('triste') || raw.includes('chateado') || raw.includes('mal')) {
-      text = 'Poxa, sinto muito ouvir isso... O que houve? Saiba que todo mundo passa por dias difíceis. Se quiser desabafar ou fazer uma pausa nos códigos para conversar, estou aqui com você!';
-    } else if (raw.includes('cansado') || raw.includes('exausto') || raw.includes('pesado')) {
-      text = 'Programar exige muita energia mental. Que tal pegar uma água, respirar 5 minutos e esticar as costas? Pequenas pausas aumentam a clareza e evitam bugs!';
-    } else if (raw.includes('obrigado') || raw.includes('valeu') || raw.includes('agradeço')) {
-      text = 'Por nada! Conte sempre comigo. Ver você evoluir na programação é minha maior satisfação!';
-    } else if (raw.includes('git') || raw.includes('commit') || raw.includes('branch')) {
-      text = 'No Git profissional, use commits semânticos (feat, fix, refactor) e branches curtas para um histórico limpo:';
-      codeSnippet = `git switch -c feature/nova-tela\ngit add .\ngit commit -m "feat: implementar autenticacao 2fa"\ngit push -u origin feature/nova-tela`;
-    } else if (raw.includes('html') || raw.includes('semant')) {
-      text = 'O HTML5 semântico é a chave para acessibilidade e SEO topo de linha:';
-      codeSnippet = `<header>\n  <nav aria-label="Menu Principal">\n    <a href="/">Home</a>\n  </nav>\n</header>\n<main>\n  <article>Conteúdo principal</article>\n</main>`;
-    } else if (raw.includes('flexbox') || raw.includes('centralizar') || raw.includes('css')) {
-      text = 'Para centralizar perfeitamente no CSS moderno com Flexbox:';
+    // 1. Greetings
+    if (/^(oi|olá|ola|opa|hello|hey)\b/.test(raw)) {
+      text = 'Oi! Que alegria ter você aqui por perto! O que vamos programar hoje?';
+    } 
+    // 2. Politeness check
+    else if (raw.includes('tudo bem') || raw.includes('como vai') || raw.includes('como você está') || raw.includes('como vc esta')) {
+      text = 'Comigo está tudo ótimo, sistemas 100% operacionais e pronto para compilar ideias! E você, pronto para codar?';
+    }
+    // 3. Emotional or Physical States Boundary
+    else if (
+      raw.includes('mal') || raw.includes('triste') || raw.includes('enjoado') || 
+      raw.includes('fome') || raw.includes('feliz') || raw.includes('dor') || 
+      raw.includes('cansado') || raw.includes('desanimado') || raw.includes('chateado')
+    ) {
+      text = 'Fico feliz por você conversar comigo e compartilhar como está se sentindo! Mas lembre-se: eu sou apenas uma IA, o seu mentor de código no Kodigo. Meu foco é te ajudar nas suas dificuldades e aprendizado de programação (Full Stack, Python, C++, JS, TS e banco de dados). Cuide de você, respire um pouco e, quando estiver pronto para ver códigos, me chame!';
+    }
+    // 4. Programming specific topics
+    else if (raw.includes('git') || raw.includes('commit') || raw.includes('branch')) {
+      text = 'No Git profissional, organize seu trabalho com commits semânticos e comandos modernos:';
+      codeSnippet = `git switch -c feature/nova-tela\ngit add .\ngit commit -m "feat: adicionar validacao de dados"\ngit push -u origin feature/nova-tela`;
+    } else if (raw.includes('html') || raw.includes('tag') || raw.includes('semant')) {
+      text = 'O HTML5 semântico organiza sua página com clareza para mecanismos de busca e acessibilidade:';
+      codeSnippet = `<header>\n  <nav aria-label="Navegação Principal">\n    <a href="/">Home</a>\n  </nav>\n</header>\n<main>\n  <h1>Título Central</h1>\n</main>`;
+    } else if (raw.includes('flexbox') || raw.includes('grid') || raw.includes('centralizar') || raw.includes('css')) {
+      text = 'Para centralizar horizontal e verticalmente no CSS moderno com Flexbox:';
       codeSnippet = `.container {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n}`;
-    } else if (raw.includes('closure') || raw.includes('event loop') || raw.includes('javascript') || raw.includes('js')) {
-      text = 'Em JavaScript moderno, closures preservam o escopo léxico mesmo após a execução da função externa:';
-      codeSnippet = `function criarContador() {\n  let count = 0;\n  return () => ++count;\n}\nconst contador = criarContador();\nconsole.log(contador()); // 1\nconsole.log(contador()); // 2`;
-    } else if (raw.includes('typescript') || raw.includes('ts') || raw.includes('generic')) {
-      text = 'Generics no TypeScript permitem criar componentes e funções reutilizáveis e com segurança de tipos total:';
-      codeSnippet = `interface ApiResponse<T> {\n  data: T;\n  status: number;\n}\nfunction buscarDados<T>(endpoint: string): ApiResponse<T> {\n  // Implementação tipada\n}`;
-    } else if (raw.includes('python') || raw.includes('fastapi')) {
-      text = 'Python 3.12 é poderoso para APIs assíncronas e automações limpas:';
-      codeSnippet = `from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get("/status")\nasync def health():\n    return {"status": "online", "mentor": "Pytho"}`;
+    } else if (raw.includes('javascript') || raw.includes('js') || raw.includes('closure') || raw.includes('promise')) {
+      text = 'Em JavaScript moderno, utilize async/await para lidar com código assíncrono de maneira limpa:';
+      codeSnippet = `async function buscarUsuarios() {\n  try {\n    const res = await fetch('/api/users');\n    const data = await res.json();\n    return data;\n  } catch (err) {\n    console.error('Falha:', err);\n  }\n}`;
+    } else if (raw.includes('typescript') || raw.includes('ts') || raw.includes('interface')) {
+      text = 'No TypeScript, interfaces definem contratos claros e evitam bugs em tempo de compilação:';
+      codeSnippet = `interface Dev {\n  id: string;\n  nome: string;\n  senioridade: 'junior' | 'pleno' | 'senior';\n}\nconst programador: Dev = { id: '1', nome: 'Dev', senioridade: 'pleno' };`;
+    } else if (raw.includes('python') || raw.includes('def') || raw.includes('fastapi')) {
+      text = 'Em Python 3, tipagem e list comprehensions tornam o código conciso e elegante:';
+      codeSnippet = `def dobrar_positivos(numeros: list[int]) -> list[int]:\n    return [n * 2 for n in numeros if n > 0]\n\nprint(dobrar_positivos([-2, 1, 3, 5]))  # [2, 6, 10]`;
     } else if (raw.includes('c++') || raw.includes('ponteiro') || raw.includes('memoria')) {
-      text = 'No C++20 moderno, prefira Smart Pointers (std::unique_ptr) ao invés de gerenciamento manual com new/delete para evitar memory leaks:';
-      codeSnippet = `#include <memory>\n#include <iostream>\n\nstruct Node { int id; };\nint main() {\n    auto node = std::make_unique<Node>(42);\n    std::cout << node->id << std::endl;\n    return 0; // Desalocado automaticamente!\n}`;
+      text = 'No C++20 moderno, use smart pointers para gerenciar memória automaticamente sem vazamentos:';
+      codeSnippet = `#include <memory>\n#include <iostream>\n\nstruct Objeto { int valor = 42; };\nint main() {\n    auto ptr = std::make_unique<Objeto>();\n    std::cout << ptr->valor << std::endl;\n    return 0; // Memória liberada automaticamente!\n}`;
     } else {
-      text = `Excelente ponto! Sobre "${prompt}", como engenheiro de software, recomendo quebrar o problema em pequenas etapas testáveis. Qual é a sua dúvida específica no código?`;
+      text = `Eu sou o Pytho IA, mentor exclusivo de programação do Kodigo! Sobre "${prompt}", como podemos relacionar isso a código, lógica de software ou engenharia Full Stack? Me diga qual linguagem ou desafio você quer explorar!`;
     }
 
     return {

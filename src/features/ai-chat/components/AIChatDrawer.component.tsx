@@ -68,7 +68,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
             <PythoMascot emotion={loading ? 'thinking' : 'happy'} size="sm" />
             <div>
               <h3 className="font-black text-sm text-duo-charcoal dark:text-white flex items-center gap-1.5">
-                <span>Pytho IA Copilot</span>
+                <span>Pytho IA</span>
                 <Sparkles className="w-4 h-4 text-duo-yellow-dark" />
               </h3>
               <p className="text-[11px] text-duo-green font-bold">Online • Mentor de Código</p>
