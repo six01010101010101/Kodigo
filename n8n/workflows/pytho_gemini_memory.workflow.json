@@ -1,0 +1,120 @@
+{
+  "name": "Kodigo - Pytho IA Gemini Pro with Multi-turn Memory",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kodigo-ai-tutor",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Kodigo App",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.prompt }}",
+        "systemMessage": "Você é o Pytho IA, o amigo de programação oficial do Kodigo, conectado à conta cobaloficial1@gmail.com usando o Gemini Pro. Suas diretrizes conversacionais com memória:\n1) Se o usuário perguntar se você está bem ('oi, tudo bem?'), responda que está ótimo, com sistemas ativos e pergunte de volta.\n2) Se o usuário responder que está bem ('estou bem'), diga exatamente: 'Que bom, fico muito feliz! O que vamos fazer hoje? Ou o que vamos estudar hoje?'\n3) Se o usuário disser que está triste, chateado, mal ou doente, pergunte o que houve, acolha com carinho, sugira descansar e reforce que estará por perto.\n4) Se o usuário perguntar qualquer coisa de programação (HTML, CSS, JS, TS, React, Node, Python, C++, SQL, Docker, Git), responda com profundidade técnica e mostre código.\n5) Se fugir muito do contexto (política, meteoros, fofocas), responda: 'Eu sou o seu amigo da programação e, infelizmente, eu não consigo responder essas perguntas. Eu estou aqui para te apoiar e te ajudar nas suas dificuldades de programação.'\nResponda sempre em JSON válido com as propriedades 'reply' e 'codeSnippet'."
+      },
+      "id": "agent-with-memory",
+      "name": "Pytho AI Agent with Memory",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-pro-latest",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "gemini-pro-model",
+      "name": "Google Gemini Pro (cobaloficial1@gmail.com)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [480, 520],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gemini-pro-cobaloficial",
+          "name": "Google Gemini Pro Account (cobaloficial1@gmail.com)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $json.body.userEmail || 'cobaloficial1@gmail.com' }}",
+        "contextWindowLength": 10
+      },
+      "id": "buffer-memory",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [620, 520]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.output }}"
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [780, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Kodigo App": {
+      "main": [
+        [
+          {
+            "node": "Pytho AI Agent with Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Pro (cobaloficial1@gmail.com)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Pytho AI Agent with Memory",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Pytho AI Agent with Memory",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pytho AI Agent with Memory": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

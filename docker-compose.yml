@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # N8N Automation & AI Agent Hub
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: kodigo-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - GEMINI_USER_ACCOUNT=cobaloficial1@gmail.com
+      - N8N_AI_ACTIVE=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/data/workflows
+    networks:
+      - kodigo-network
+
+  # Web Frontend (Vite + React)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kodigo-web
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_PORT=5173
+      - VITE_N8N_URL=http://localhost:5678
+      - VITE_SUPABASE_URL=https://ewkhfqezeaufqpyaqamn.supabase.co
+    networks:
+      - kodigo-network
+    depends_on:
+      - n8n
+
+networks:
+  kodigo-network:
+    driver: bridge
+
+volumes:
+  n8n_data:
+    driver: local
