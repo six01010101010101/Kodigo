@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -30,8 +31,10 @@ export default {
         'duo-blue': '0 4px 0 #1899D6',
         'duo-yellow': '0 4px 0 #E5A500',
         'duo-red': '0 4px 0 #EA2B2B',
-        'duo-gray': '0 4px 0 #E5E5E5',
-        'duo-purple': '0 4px 0 #A55EEA'
+        'duo-gray': '0 4px 0 #D4D4D4',
+        'duo-purple': '0 4px 0 #A55EEA',
+        'duo-dark': '0 4px 0 #0F172A',
+        'duo-3d': '0 6px 0 rgba(0,0,0,0.18)'
       }
     },
   },

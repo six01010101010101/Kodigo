@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, CheckCircle2, AlertCircle, Lightbulb } from 'lucide-react';
 import { Lesson } from '../../../types/kodigo.types';
 import { soundService } from '../../../services/sound.service';
-import { KodiMascot } from '../../mascot/components/KodiMascot.component';
+import { PythoMascot } from '../../mascot/components/PythoMascot.component';
 
 interface LessonModalProps {
   lesson: Lesson;
@@ -108,11 +108,11 @@ export const LessonModal: React.FC<LessonModalProps> = ({
 
           {/* Mascot & Hint */}
           <div className="flex items-center justify-between pt-4 border-t border-duo-border">
-            <KodiMascot
+            <PythoMascot
               emotion={status === 'correct' ? 'happy' : status === 'incorrect' ? 'sad' : 'idle'}
               speechText={
                 status === 'correct'
-                  ? 'Sensacional! Você acertou em cheio!'
+                  ? 'Sssssensacional! Você acertou em cheio!'
                   : status === 'incorrect'
                   ? 'Quase lá! Revise a sintaxe e tente de novo.'
                   : showHint
