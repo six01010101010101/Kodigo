@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Heart, Gem, Crown, Code2, Bot, BookOpen, Target, Trophy, User } from 'lucide-react';
+import { Flame, Heart, Gem, Crown, Code2, Bot, BookOpen, Target, Trophy, User, ShoppingBag } from 'lucide-react';
 import { UserGamificationState, CodeTrack } from '../../types/kodigo.types';
 
 export type MainNavTab = 'learn' | 'missions' | 'ranking' | 'profile';
@@ -12,6 +12,7 @@ interface HeaderProps {
   onOpenPricing: () => void;
   onOpenTracks: () => void;
   onOpenAIChat: () => void;
+  onOpenShop: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,7 +22,8 @@ export const Header: React.FC<HeaderProps> = ({
   onChangeTab,
   onOpenPricing,
   onOpenTracks,
-  onOpenAIChat
+  onOpenAIChat,
+  onOpenShop
 }) => {
   const tabs: { id: MainNavTab; label: string; icon: React.ReactNode }[] = [
     { id: 'learn', label: 'Aprender', icon: <BookOpen className="w-4 h-4" /> },
@@ -52,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden md:inline">{activeTrack.name}</span>
           </button>
 
-          {/* AI Pytho Trigger Button for Mobile */}
+          {/* AI Mobile Button */}
           <button
             onClick={onOpenAIChat}
             className="sm:hidden flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500 text-white font-black text-xs shadow-duo-green"
@@ -80,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
           ))}
         </nav>
 
-        {/* Gamification Stats & AI Button */}
+        {/* Gamification Stats, Shop & AI */}
         <div className="flex items-center gap-3 sm:gap-4 font-extrabold text-xs sm:text-sm">
           {/* AI Mascot Trigger */}
           <button
@@ -97,17 +99,34 @@ export const Header: React.FC<HeaderProps> = ({
             <span>{userState.streak}</span>
           </div>
 
-          {/* Gems */}
-          <div className="flex items-center gap-1 text-duo-blue" title="Gemas acumuladas">
+          {/* Gems - Clickable to open Shop */}
+          <button
+            onClick={onOpenShop}
+            className="flex items-center gap-1 text-duo-blue hover:scale-105 transition-transform"
+            title="Abrir Loja de Gemas"
+          >
             <Gem className="w-4 h-4 fill-duo-blue text-duo-blue-dark" />
             <span>{userState.gems}</span>
-          </div>
+          </button>
 
-          {/* Hearts */}
-          <div className="flex items-center gap-1 text-duo-red" title="Vidas restantes">
+          {/* Hearts - Clickable to open Shop */}
+          <button
+            onClick={onOpenShop}
+            className="flex items-center gap-1 text-duo-red hover:scale-105 transition-transform"
+            title="Recarregar Vidas"
+          >
             <Heart className="w-4 h-4 fill-duo-red text-duo-red-dark" />
             <span>{userState.isPro ? '∞' : userState.hearts}</span>
-          </div>
+          </button>
+
+          {/* Shop Icon */}
+          <button
+            onClick={onOpenShop}
+            className="p-1.5 rounded-xl border border-duo-border dark:border-slate-700 text-duo-gray dark:text-slate-300 hover:text-duo-charcoal dark:hover:text-white"
+            title="Abrir Loja"
+          >
+            <ShoppingBag className="w-4 h-4" />
+          </button>
 
           {/* Pro Badge */}
           <button

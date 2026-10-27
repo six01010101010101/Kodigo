@@ -5,6 +5,7 @@ import { PythoMascot } from './features/mascot/components/PythoMascot.component'
 import { LessonModal } from './features/lesson/components/LessonModal.component';
 import { PricingModal } from './features/pricing/components/PricingModal.component';
 import { TracksModal } from './features/tracks/components/TracksModal.component';
+import { ShopModal } from './features/shop/components/ShopModal.component';
 import { CodePlayground } from './features/runner/components/CodePlayground.component';
 import { HistoryView } from './features/history/components/HistoryView.component';
 import { LeaderboardView } from './features/leaderboard/components/LeaderboardView.component';
@@ -15,7 +16,7 @@ import { authService } from './features/auth/auth.service';
 import { AuthUser } from './features/auth/auth.types';
 import { themeService } from './features/theme/theme.service';
 import { AppTheme } from './features/theme/theme.types';
-import { INITIAL_TRACKS, HTML_CSS_UNITS } from './services/course.data';
+import { SIX_LEVEL_TRACKS, SERIOUS_UNITS } from './services/curriculum.data';
 import { UserGamificationState, Lesson, CodeTrack } from './types/kodigo.types';
 
 export const App: React.FC = () => {
@@ -24,29 +25,28 @@ export const App: React.FC = () => {
   const [currentTheme, setCurrentTheme] = useState<AppTheme>(() => themeService.getTheme());
   const [activeTab, setActiveTab] = useState<MainNavTab>('learn');
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [isTracksOpen, setIsTracksOpen] = useState(false);
 
-  const [tracks] = useState<CodeTrack[]>(INITIAL_TRACKS);
-  const [activeTrack, setActiveTrack] = useState<CodeTrack>(INITIAL_TRACKS[0]);
-  const [units, setUnits] = useState(HTML_CSS_UNITS);
+  const [tracks] = useState<CodeTrack[]>(SIX_LEVEL_TRACKS);
+  const [activeTrack, setActiveTrack] = useState<CodeTrack>(SIX_LEVEL_TRACKS[0]);
+  const [units, setUnits] = useState(SERIOUS_UNITS);
 
   const [userState, setUserState] = useState<UserGamificationState>({
     hearts: 5,
     maxHearts: 5,
-    xp: 220,
-    gems: 450,
-    streak: 8,
-    activeTrackId: INITIAL_TRACKS[0].id,
+    xp: 280,
+    gems: 480,
+    streak: 9,
+    activeTrackId: SIX_LEVEL_TRACKS[0].id,
     isPro: false
   });
 
   const [activeLesson, setActiveLesson] = useState<{ lesson: Lesson; unitTitle: string } | null>(null);
-  const [isPricingOpen, setIsPricingOpen] = useState(false);
-  const [isTracksOpen, setIsTracksOpen] = useState(false);
-  const [mascotTip, setMascotTip] = useState('Sssss! Vamos dominar programação do zero ao avançado!');
+  const [mascotTip, setMascotTip] = useState('Sssss! Vamos dominar engenharia de software do zero ao profissional!');
 
-  useEffect(() => {
-    themeService.init();
-  }, []);
+  useEffect(() => { themeService.init(); }, []);
 
   const handleChangeTheme = (t: AppTheme) => {
     setCurrentTheme(t);
@@ -55,7 +55,7 @@ export const App: React.FC = () => {
 
   const handleLessonComplete = (xpEarned: number) => {
     if (!activeLesson) return;
-    setUserState((prev) => ({ ...prev, xp: prev.xp + xpEarned, gems: prev.gems + 20 }));
+    setUserState((prev) => ({ ...prev, xp: prev.xp + xpEarned, gems: prev.gems + 25 }));
     setUnits((prev) =>
       prev.map((unit) => ({
         ...unit,
@@ -67,16 +67,11 @@ export const App: React.FC = () => {
   };
 
   if (!user && !isGuest) {
-    return (
-      <AuthHub
-        onAuthenticated={(usr) => setUser(usr)}
-        onExploreAsGuest={() => setIsGuest(true)}
-      />
-    );
+    return <AuthHub onAuthenticated={(usr) => setUser(usr)} onExploreAsGuest={() => setIsGuest(true)} />;
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] dark:bg-slate-950 text-duo-charcoal dark:text-slate-100 flex flex-col font-sans transition-colors">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors">
       <Header
         userState={userState}
         activeTrack={activeTrack}
@@ -85,6 +80,7 @@ export const App: React.FC = () => {
         onOpenPricing={() => setIsPricingOpen(true)}
         onOpenTracks={() => setIsTracksOpen(true)}
         onOpenAIChat={() => setIsAIChatOpen(true)}
+        onOpenShop={() => setIsShopOpen(true)}
       />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
@@ -94,7 +90,7 @@ export const App: React.FC = () => {
               <PythoMascot
                 emotion="idle"
                 speechText={mascotTip}
-                onMascotClick={() => setMascotTip('Sabia que o Python foi batizado em homenagem ao grupo Monty Python?')}
+                onMascotClick={() => setMascotTip('Dica de engenharia: use sempre linters e tipagem estrita para evitar 80% dos bugs em produção!')}
               />
               <div className="text-right flex flex-col items-center sm:items-end">
                 <span className="text-xs font-black uppercase tracking-wider text-duo-green">Trilha Ativa</span>
@@ -109,7 +105,7 @@ export const App: React.FC = () => {
               units={units}
               onSelectLesson={(l, title) => {
                 if (userState.hearts <= 0 && !userState.isPro) {
-                  setIsPricingOpen(true);
+                  setIsShopOpen(true);
                   return;
                 }
                 setActiveLesson({ lesson: l, unitTitle: title });
@@ -126,11 +122,7 @@ export const App: React.FC = () => {
             user={user}
             currentTheme={currentTheme}
             onChangeTheme={handleChangeTheme}
-            onLogout={() => {
-              authService.logout();
-              setUser(null);
-              setIsGuest(false);
-            }}
+            onLogout={() => { authService.logout(); setUser(null); setIsGuest(false); }}
           />
         )}
       </main>
@@ -155,6 +147,32 @@ export const App: React.FC = () => {
           isPro={userState.isPro}
           onClose={() => setIsPricingOpen(false)}
           onTogglePro={() => setUserState((p) => ({ ...p, isPro: !p.isPro, hearts: 5 }))}
+        />
+      )}
+
+      {isShopOpen && (
+        <ShopModal
+          gems={userState.gems}
+          hearts={userState.hearts}
+          maxHearts={userState.maxHearts}
+          onClose={() => setIsShopOpen(false)}
+          onBuyHearts={(cost, amount) => {
+            if (userState.gems >= cost) {
+              setUserState((prev) => ({ ...prev, gems: prev.gems - cost, hearts: prev.hearts + amount }));
+              return true;
+            }
+            return false;
+          }}
+          onWatchAdOrPractice={() => {
+            setUserState((prev) => ({ ...prev, hearts: Math.min(prev.maxHearts, prev.hearts + 1) }));
+          }}
+          onBuyStreakFreeze={(cost) => {
+            if (userState.gems >= cost) {
+              setUserState((prev) => ({ ...prev, gems: prev.gems - cost }));
+              return true;
+            }
+            return false;
+          }}
         />
       )}
 

@@ -29,12 +29,11 @@ export const PathTrail: React.FC<PathTrailProps> = ({ units, onSelectLesson }) =
           {/* Stepping Path Nodes */}
           <div className="flex flex-col items-center gap-6">
             {unit.lessons.length === 0 ? (
-              <div className="p-4 rounded-xl border-2 border-dashed border-duo-border text-center text-xs font-bold text-duo-gray">
-                Lições em breve para esta unidade
+              <div className="p-4 rounded-xl border-2 border-dashed border-duo-border dark:border-slate-800 text-center text-xs font-bold text-duo-gray dark:text-slate-400">
+                Desafios práticos sendo preparados para este nível
               </div>
             ) : (
               unit.lessons.map((lesson, lessonIndex) => {
-                // Stepping curve offset: cycle -30px, 0px, +30px, 0px
                 const offsets = [0, 40, 0, -40];
                 const offsetX = offsets[lessonIndex % offsets.length];
 
@@ -50,7 +49,7 @@ export const PathTrail: React.FC<PathTrailProps> = ({ units, onSelectLesson }) =
                         lesson.completed
                           ? 'bg-duo-yellow shadow-duo-yellow text-duo-charcoal'
                           : unit.isLocked
-                          ? 'bg-gray-200 shadow-duo-gray text-gray-400 cursor-not-allowed'
+                          ? 'bg-gray-200 dark:bg-slate-800 shadow-duo-gray dark:shadow-duo-dark text-gray-400 dark:text-slate-600 cursor-not-allowed'
                           : 'bg-duo-green shadow-duo-green text-white animate-pulse'
                       }`}
                     >
@@ -63,7 +62,7 @@ export const PathTrail: React.FC<PathTrailProps> = ({ units, onSelectLesson }) =
                       )}
                     </button>
 
-                    <span className="text-xs font-black text-duo-charcoal mt-2 max-w-[140px] text-center truncate">
+                    <span className="text-xs font-black text-duo-charcoal dark:text-slate-200 mt-2 max-w-[150px] text-center truncate">
                       {lesson.title}
                     </span>
                   </div>
@@ -76,7 +75,7 @@ export const PathTrail: React.FC<PathTrailProps> = ({ units, onSelectLesson }) =
               <div className="w-16 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-duo-yellow border-2 border-amber-300">
                 <span className="text-2xl">🎁</span>
               </div>
-              <span className="text-[11px] font-black uppercase text-amber-700 mt-1">
+              <span className="text-[11px] font-black uppercase text-amber-700 dark:text-amber-400 mt-1 font-mono">
                 Baú de XP
               </span>
             </div>
