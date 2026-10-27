@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="owlGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#58CC02"/>
+      <stop offset="100%" stop-color="#46A302"/>
+    </linearGradient>
+  </defs>
+  <!-- Body -->
+  <rect x="20" y="20" width="80" height="80" rx="35" fill="url(#owlGrad)"/>
+  <!-- Belly -->
+  <ellipse cx="60" cy="72" rx="26" ry="22" fill="#FFFFFF"/>
+  <!-- Eyes -->
+  <circle cx="43" cy="46" r="14" fill="#FFFFFF"/>
+  <circle cx="77" cy="46" r="14" fill="#FFFFFF"/>
+  <circle cx="45" cy="46" r="7" fill="#1CB0F6"/>
+  <circle cx="75" cy="46" r="7" fill="#1CB0F6"/>
+  <circle cx="47" cy="44" r="2.5" fill="#FFFFFF"/>
+  <circle cx="77" cy="44" r="2.5" fill="#FFFFFF"/>
+  <!-- Beak -->
+  <polygon points="56,53 64,53 60,61" fill="#FF9600"/>
+  <!-- Code Brackets on Belly -->
+  <text x="60" y="78" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="bold" fill="#58CC02" text-anchor="middle">&lt;/&gt;</text>
+  <!-- Feet -->
+  <ellipse cx="44" cy="100" rx="9" ry="5" fill="#FF9600"/>
+  <ellipse cx="76" cy="100" rx="9" ry="5" fill="#FF9600"/>
+</svg>
