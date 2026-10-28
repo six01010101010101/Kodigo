@@ -45,6 +45,9 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
         );
         return isDuplicate ? prev : [...prev, incoming];
       });
+      if (incoming.sender === 'pytho') {
+        setLoading(false);
+      }
     });
     return () => { clearInterval(timer); unsub(); };
   }, []);
@@ -74,16 +77,15 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
 
     try {
       const reply = await aiChatService.askPytho(textToSend);
-      soundService.playCorrect();
+      setLoading(false);
       setMessages((prev) => {
         const isDuplicate = prev.some(
           (m) => m.id === reply.id || (m.sender === reply.sender && m.text.trim() === reply.text.trim())
         );
         return isDuplicate ? prev : [...prev, reply];
       });
+      soundService.playCorrect();
     } catch {
-      // Handled silently
-    } finally {
       setLoading(false);
     }
   };

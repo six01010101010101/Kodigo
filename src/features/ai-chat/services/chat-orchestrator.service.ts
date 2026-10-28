@@ -45,10 +45,9 @@ class ChatOrchestratorService {
 
     // 2. High-Empathy Conversational Engine (emotions, health, time/date, greetings)
     const lastTurn = this.memoryContext.recentTurns[this.memoryContext.recentTurns.length - 1];
-    const prevPytho = lastTurn?.pythoResponse?.toLowerCase() || '';
-    const askedAboutUser = prevPytho.includes('e com você') || prevPytho.includes('e você') || prevPytho.includes('como você');
+    const prevPytho = lastTurn?.pythoResponse || '';
 
-    const convResult = aiConversationalService.checkConversationalQuery(lower, askedAboutUser);
+    const convResult = aiConversationalService.checkConversationalQuery(lower, prevPytho);
     if (convResult) {
       this.recordTurn(raw, convResult.text);
       return {
