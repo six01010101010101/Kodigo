@@ -143,7 +143,11 @@ export const AuthHub: React.FC<AuthHubProps> = ({ onAuthenticated, onExploreAsGu
             />
           </div>
 
-          {errorMsg && <p className="text-xs font-bold text-duo-red text-center">{errorMsg}</p>}
+          {errorMsg && (
+            <div className="p-3 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs font-bold text-duo-red text-center">
+              {errorMsg}
+            </div>
+          )}
 
           <button
             type="submit"

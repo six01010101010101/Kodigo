@@ -39,7 +39,6 @@ class AuthService {
         this.cachedUser = authUser;
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authUser));
       } else if (!session) {
-        // Only clear if explicitly signed out from Supabase
         const raw = localStorage.getItem(AUTH_STORAGE_KEY);
         if (raw) {
           try {
@@ -72,6 +71,9 @@ class AuthService {
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      if (error.message.includes('Invalid login credentials')) {
+        throw new Error('E-mail ou senha incorretos.');
+      }
       throw new Error(error.message);
     }
 
@@ -104,6 +106,9 @@ class AuthService {
       options: { data: { name } }
     });
     if (error) {
+      if (error.message.includes('User already registered')) {
+        throw new Error('Este e-mail já está cadastrado. Alterne para a aba "ENTRAR".');
+      }
       throw new Error(error.message);
     }
 
@@ -122,14 +127,32 @@ class AuthService {
   }
 
   async loginWithOAuth(provider: 'google' | 'github'): Promise<void> {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: window.location.origin
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true
       }
     });
-    if (error) {
-      throw new Error(error.message);
+    if (error) throw new Error(error.message);
+
+    if (data?.url) {
+      try {
+        const check = await fetch(data.url, { redirect: 'manual' });
+        if (check.status === 400) {
+          const body = (await check.json()) as { msg?: string };
+          if (body?.msg?.includes('provider is not enabled')) {
+            throw new Error(
+              `O provedor ${provider === 'google' ? 'Google' : 'GitHub'} ainda não está ativado no painel do Supabase. Para entrar agora, use a aba "Entrar" com seu e-mail ou o modo visitante!`
+            );
+          }
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message.includes('ainda não está ativado')) {
+          throw err;
+        }
+      }
+      window.location.href = data.url;
     }
   }
 
