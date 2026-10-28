@@ -6,12 +6,7 @@ import { PythoMascot } from '../../mascot/components/PythoMascot.component';
 import { soundService } from '../../../services/sound.service';
 import { formatRelativeTime } from '../../../utils/time.utils';
 
-interface AIChatDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) => {
+export const AIChatDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     if (aiChatService.checkAndResetExpiredSession()) return [];
     return aiChatService.getHistory();
@@ -23,11 +18,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
 
   useEffect(() => {
     if (isOpen) {
-      if (aiChatService.checkAndResetExpiredSession()) {
-        setMessages([]);
-      } else {
-        setMessages(aiChatService.getHistory());
-      }
+      setMessages(aiChatService.checkAndResetExpiredSession() ? [] : aiChatService.getHistory());
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [isOpen]);
@@ -39,23 +30,13 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 30000);
     const unsub = aiChatService.subscribeRealtime((incoming) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === incoming.id)) return prev;
-        return [...prev, incoming];
-      });
-      if (incoming.sender === 'pytho') {
-        setLoading(false);
-      }
+      setMessages((prev) => (prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]));
+      if (incoming.sender === 'pytho') setLoading(false);
     });
     return () => { clearInterval(timer); unsub(); };
   }, []);
 
   if (!isOpen) return null;
-
-  const handleClose = () => {
-    aiChatService.touchActivity();
-    onClose();
-  };
 
   const handleSend = async (queryText?: string) => {
     const textToSend = queryText || input;
@@ -63,8 +44,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
 
     soundService.playClick();
     aiChatService.touchActivity();
-    const userMsg: ChatMessage = { id: `usr_${Date.now()}`, sender: 'user', text: textToSend, createdAt: Date.now() };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { id: `usr_${Date.now()}`, sender: 'user', text: textToSend, createdAt: Date.now() }]);
     setInput('');
     setLoading(true);
 
@@ -82,17 +62,12 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
     const current = localStorage.getItem('kodigo_gemini_api_key') || '';
     const entered = window.prompt('Configuração de Chave Pytho IA (opcional):', current);
     if (entered !== null) {
-      if (entered.trim()) {
-        localStorage.setItem('kodigo_gemini_api_key', entered.trim());
-        alert('Chave configurada com sucesso para o Pytho IA!');
-      } else {
-        localStorage.removeItem('kodigo_gemini_api_key');
-        alert('Chave removida. Usando servidor Pytho IA oficial.');
-      }
+      if (entered.trim()) localStorage.setItem('kodigo_gemini_api_key', entered.trim());
+      else localStorage.removeItem('kodigo_gemini_api_key');
     }
   };
 
-  const suggestions = ['Oi, tudo bem?', 'Que horas são agora?', 'Estou bem!', 'Explique buraco negro', 'Código em Python'];
+  const suggestions = ['Oi, tudo bem?', 'Que horas são agora?', 'Estou bem!', 'Explique buraco negro', 'Crie um botão em React'];
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-end">
@@ -115,7 +90,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
             <button onClick={handleConfigureApiKey} className="p-1.5 rounded-xl border border-duo-border dark:border-slate-700 text-duo-gray hover:text-duo-charcoal dark:hover:text-white" title="Configurar Chave Pytho IA">
               <Key className="w-4 h-4" />
             </button>
-            <button onClick={handleClose} className="p-1 text-duo-gray hover:text-duo-charcoal dark:hover:text-white">
+            <button onClick={() => { aiChatService.touchActivity(); onClose(); }} className="p-1 text-duo-gray hover:text-duo-charcoal dark:hover:text-white">
               <X className="w-6 h-6 stroke-[2.5]" />
             </button>
           </div>
@@ -125,25 +100,30 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center px-4 py-8">
               <PythoMascot emotion="happy" size="md" />
-              <h4 className="font-black text-sm text-duo-charcoal dark:text-white mt-3">
-                Nova Conversa com Pytho IA
-              </h4>
-              <p className="text-xs text-duo-gray dark:text-slate-400 max-w-xs mt-1">
-                Pergunte qualquer coisa sobre ciência, tecnologia, programação, cotidiano ou sobre o seu dia!
-              </p>
+              <h4 className="font-black text-sm text-duo-charcoal dark:text-white mt-3">Nova Conversa com Pytho IA</h4>
+              <p className="text-xs text-duo-gray dark:text-slate-400 max-w-xs mt-1">Pergunte qualquer coisa sobre ciência, tecnologia, programação ou converse sobre seu dia!</p>
             </div>
           )}
 
           {messages.map((msg) => (
             <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className={`max-w-[85%] rounded-2xl p-3.5 text-xs font-bold leading-relaxed shadow-sm ${msg.sender === 'user' ? 'bg-duo-blue text-white rounded-br-none shadow-duo-blue' : 'bg-gray-100 dark:bg-slate-800 text-duo-charcoal dark:text-slate-100 rounded-bl-none border border-duo-border dark:border-slate-700'}`}>
+              <div className={`max-w-[88%] rounded-2xl p-3.5 text-xs font-bold leading-relaxed shadow-sm whitespace-pre-line ${msg.sender === 'user' ? 'bg-duo-blue text-white rounded-br-none shadow-duo-blue' : 'bg-gray-100 dark:bg-slate-800 text-duo-charcoal dark:text-slate-100 rounded-bl-none border border-duo-border dark:border-slate-700'}`}>
                 <p>{msg.text}</p>
                 {msg.codeSnippet && (
-                  <pre className="mt-2.5 p-2.5 bg-slate-950 text-emerald-400 font-mono text-[11px] rounded-xl overflow-x-auto border border-slate-800">
+                  <pre className="mt-2.5 p-2.5 bg-slate-950 text-emerald-400 font-mono text-[11px] rounded-xl overflow-x-auto border border-slate-800 whitespace-pre">
                     <code>{msg.codeSnippet}</code>
                   </pre>
                 )}
               </div>
+              {msg.followUpPrompts && msg.followUpPrompts.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5 max-w-[88%]">
+                  {msg.followUpPrompts.map((fp) => (
+                    <button key={fp} onClick={() => handleSend(fp)} className="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 transition-colors text-left">
+                      💡 {fp}
+                    </button>
+                  ))}
+                </div>
+              )}
               <span className="text-[10px] text-duo-gray mt-1 px-1">{msg.sender === 'user' ? `Enviado ${formatRelativeTime(msg.createdAt)}` : formatRelativeTime(msg.createdAt)}</span>
             </div>
           ))}
@@ -151,7 +131,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
           {loading && (
             <div className="flex items-center gap-2 text-xs font-bold text-duo-gray">
               <Bot className="w-4 h-4 animate-spin text-duo-green" />
-              <span>Pytho IA está digitando...</span>
+              <span>Pytho IA está pensando...</span>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -167,7 +147,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
 
         <div className="p-3 border-t border-duo-border dark:border-slate-800 bg-white dark:bg-slate-900">
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
-            <input type="text" placeholder="Fale com o Pytho ou tire qualquer dúvida..." value={input} onChange={(e) => setInput(e.target.value)} className="flex-1 px-4 py-2.5 rounded-2xl border-2 border-duo-border dark:border-slate-700 bg-duo-bg-light dark:bg-slate-800 text-xs font-bold text-duo-charcoal dark:text-white focus:outline-none focus:border-duo-green" />
+            <input type="text" placeholder="Fale com o Pytho ou envie um comando..." value={input} onChange={(e) => setInput(e.target.value)} className="flex-1 px-4 py-2.5 rounded-2xl border-2 border-duo-border dark:border-slate-700 bg-duo-bg-light dark:bg-slate-800 text-xs font-bold text-duo-charcoal dark:text-white focus:outline-none focus:border-duo-green" />
             <button type="submit" disabled={!input.trim() || loading} className="w-10 h-10 rounded-2xl bg-duo-green hover:bg-duo-green-dark disabled:bg-gray-200 text-white flex items-center justify-center shadow-duo-green active:translate-y-1 transition-all">
               <Send className="w-4 h-4 stroke-[2.5]" />
             </button>

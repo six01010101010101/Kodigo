@@ -23,5 +23,6 @@ export interface ChatMessage {
   sender: 'user' | 'pytho';
   text: string;
   codeSnippet?: string;
+  followUpPrompts?: string[];
   createdAt: number;
 }

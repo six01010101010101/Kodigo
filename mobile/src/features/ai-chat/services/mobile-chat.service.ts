@@ -4,6 +4,7 @@ import { EDGE_FUNCTION_URL } from '../../../services/supabase.client';
 interface ChatResponse {
   reply: string;
   codeSnippet?: string;
+  follow_up_prompts?: string[];
 }
 
 class MobileChatService {
@@ -36,6 +37,7 @@ class MobileChatService {
             sender: 'pytho',
             text: data.reply,
             codeSnippet: data.codeSnippet,
+            followUpPrompts: data.follow_up_prompts,
             createdAt: Date.now(),
           };
         }

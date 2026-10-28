@@ -71,8 +71,19 @@ class GeminiProService {
         })
       });
       if (res.ok) {
-        const data = (await res.json()) as { reply?: string; codeSnippet?: string };
-        if (data.reply) return { reply: data.reply, codeSnippet: data.codeSnippet };
+        const data = (await res.json()) as {
+          reply?: string;
+          codeSnippet?: string;
+          follow_up_prompts?: string[];
+          followUpPrompts?: string[];
+        };
+        if (data.reply) {
+          return {
+            reply: data.reply,
+            codeSnippet: data.codeSnippet,
+            followUpPrompts: data.follow_up_prompts || data.followUpPrompts
+          };
+        }
       }
     } catch {
       // Ignored

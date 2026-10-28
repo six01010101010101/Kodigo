@@ -2,6 +2,9 @@ import { ChatMessageTurn, ChatMemoryContext, ConversationTurn } from '../types/c
 import { geminiProService } from './gemini-pro.service';
 import { aiConversationalService } from './ai-conversational.service';
 import { aiKnowledgeService } from './ai-knowledge.service';
+import { agentToolsService } from './agent-tools.service';
+import { agentPromptsService } from './agent-prompts.service';
+import { AgentContext } from '../types/agent.types';
 
 const generateUuid = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -19,7 +22,26 @@ class ChatOrchestratorService {
     const raw = prompt.trim();
     const lower = raw.toLowerCase();
 
-    // 1. Try Gemini Pro Live Backend (Supabase Edge Function / n8n)
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+    const localTime = new Date().toLocaleTimeString('pt-BR', { timeZone, hour: '2-digit', minute: '2-digit' });
+    const localDate = new Date().toLocaleDateString('pt-BR', { timeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const agentCtx: AgentContext = { localTime, localDate, timeZone };
+
+    // 1. Base dos Dados Pattern: Deterministic Agent Tools (Code, Math, Comparison)
+    const toolResult = agentToolsService.executeTool(raw, agentCtx);
+    if (toolResult) {
+      this.recordTurn(raw, toolResult.text);
+      return {
+        id: generateUuid(),
+        sender: 'pytho',
+        text: toolResult.text,
+        codeSnippet: toolResult.codeSnippet,
+        followUpPrompts: toolResult.followUpPrompts,
+        createdAt: Date.now()
+      };
+    }
+
+    // 2. Gemini Pro / Supabase Edge Function with Context & Agent Prompting
     const historyPayload = this.memoryContext.recentTurns.flatMap((t) => [
       { role: 'user' as const, text: t.userPrompt },
       { role: 'model' as const, text: t.pythoResponse }
@@ -33,37 +55,45 @@ class ChatOrchestratorService {
     });
 
     if (geminiResponse?.reply) {
+      const followUps = geminiResponse.followUpPrompts && geminiResponse.followUpPrompts.length > 0
+        ? geminiResponse.followUpPrompts
+        : agentPromptsService.generateContextualFollowUps(raw, geminiResponse.reply);
+
       this.recordTurn(raw, geminiResponse.reply);
       return {
         id: generateUuid(),
         sender: 'pytho',
         text: geminiResponse.reply,
         codeSnippet: geminiResponse.codeSnippet,
+        followUpPrompts: followUps,
         createdAt: Date.now()
       };
     }
 
-    // 2. High-Empathy Conversational Engine (emotions, health, time/date, greetings)
+    // 3. Empathetic Conversational Engine
     const lastTurn = this.memoryContext.recentTurns[this.memoryContext.recentTurns.length - 1];
     const prevPytho = lastTurn?.pythoResponse || '';
 
     const convResult = aiConversationalService.checkConversationalQuery(lower, prevPytho);
     if (convResult) {
+      const followUps = agentPromptsService.generateContextualFollowUps(raw, convResult.text);
       this.recordTurn(raw, convResult.text);
       return {
         id: generateUuid(),
         sender: 'pytho',
         text: convResult.text,
         codeSnippet: convResult.codeSnippet,
+        followUpPrompts: followUps,
         createdAt: Date.now()
       };
     }
 
-    // 3. Universal Knowledge & Friend Chat Engine
+    // 4. Knowledge Engine Fallback
     const knowledgeResult = aiKnowledgeService.findKnowledgeAnswer(raw);
     const finalReply = knowledgeResult || {
-      text: `Nossa, concordo totalmente com você! É tão bom bater um papo leve e trocar ideias sobre isso. O que mais você tem feito de bom ultimamente?`
+      text: `Nossa, concordo plenamente com você! É tão bom bater um papo leve e trocar ideias sobre isso. O que mais você tem feito de bom ultimamente?`
     };
+    const followUps = agentPromptsService.generateContextualFollowUps(raw, finalReply.text);
 
     this.recordTurn(raw, finalReply.text);
     return {
@@ -71,6 +101,7 @@ class ChatOrchestratorService {
       sender: 'pytho',
       text: finalReply.text,
       codeSnippet: finalReply.codeSnippet,
+      followUpPrompts: followUps,
       createdAt: Date.now()
     };
   }

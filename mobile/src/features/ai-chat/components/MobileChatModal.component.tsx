@@ -14,12 +14,7 @@ import {
 import { ChatMessage } from '../../../types/mobile.types';
 import { mobileChatService } from '../services/mobile-chat.service';
 
-interface MobileChatModalProps {
-  visible: boolean;
-  onClose: () => void;
-}
-
-export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClose }) => {
+export const MobileChatModal: React.FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [lastActiveTime, setLastActiveTime] = useState<number>(0);
   const [input, setInput] = useState('');
@@ -29,9 +24,7 @@ export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClo
   useEffect(() => {
     if (visible) {
       const now = Date.now();
-      if (!lastActiveTime || now - lastActiveTime > 30 * 60 * 1000) {
-        setMessages([]);
-      }
+      if (!lastActiveTime || now - lastActiveTime > 30 * 60 * 1000) setMessages([]);
       setLastActiveTime(now);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
@@ -58,10 +51,7 @@ export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClo
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
             <Text style={styles.mascotEmoji}>🐍</Text>
@@ -83,7 +73,7 @@ export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClo
             <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 }}>
               <Text style={{ fontSize: 48, marginBottom: 12 }}>🐍</Text>
               <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginBottom: 6 }}>Nova Conversa com Pytho IA</Text>
-              <Text style={{ color: '#94A3B8', fontSize: 12, textAlign: 'center', lineHeight: 18 }}>Pergunte qualquer coisa sobre ciência, tecnologia, programação, cotidiano ou sobre o seu dia!</Text>
+              <Text style={{ color: '#94A3B8', fontSize: 12, textAlign: 'center', lineHeight: 18 }}>Pergunte qualquer coisa sobre ciência, tecnologia, programação ou seu dia!</Text>
             </View>
           )}
           {messages.map((m) => {
@@ -98,6 +88,15 @@ export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClo
                     </View>
                   )}
                 </View>
+                {m.followUpPrompts && m.followUpPrompts.length > 0 && (
+                  <View style={styles.followUpWrapper}>
+                    {m.followUpPrompts.map((fp) => (
+                      <TouchableOpacity key={fp} onPress={() => handleSend(fp)} style={styles.followUpChip}>
+                        <Text style={styles.followUpText}>💡 {fp}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
                 <Text style={styles.timeText}>{isUser ? 'Enviado agora' : 'agora'}</Text>
               </View>
             );
@@ -105,7 +104,7 @@ export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClo
           {loading && (
             <View style={styles.loadingRow}>
               <ActivityIndicator size="small" color="#10B981" />
-              <Text style={styles.loadingText}>Pytho IA está digitando...</Text>
+              <Text style={styles.loadingText}>Pytho IA está pensando...</Text>
             </View>
           )}
         </ScrollView>
@@ -119,18 +118,8 @@ export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClo
         </ScrollView>
 
         <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            value={input}
-            onChangeText={setInput}
-            placeholder="Pergunte ao Pytho..."
-            placeholderTextColor="#64748B"
-          />
-          <TouchableOpacity
-            style={[styles.sendButton, !input.trim() && styles.disabledButton]}
-            onPress={() => handleSend()}
-            disabled={!input.trim() || loading}
-          >
+          <TextInput style={styles.textInput} value={input} onChangeText={setInput} placeholder="Pergunte ao Pytho..." placeholderTextColor="#64748B" />
+          <TouchableOpacity style={[styles.sendButton, !input.trim() && styles.disabledButton]} onPress={() => handleSend()} disabled={!input.trim() || loading}>
             <Text style={styles.sendButtonText}>➔</Text>
           </TouchableOpacity>
         </View>
@@ -141,17 +130,7 @@ export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClo
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F172A' },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 48 : 16,
-    paddingBottom: 14,
-    backgroundColor: '#1E293B',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#334155',
-  },
+  header: { paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 48 : 16, paddingBottom: 14, backgroundColor: '#1E293B', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#334155' },
   headerTitleRow: { flexDirection: 'row', alignItems: 'center' },
   mascotEmoji: { fontSize: 26, marginRight: 10 },
   titleText: { color: '#F8FAFC', fontSize: 16, fontWeight: '900' },
@@ -173,6 +152,9 @@ const styles = StyleSheet.create({
   pythoText: { color: '#E2E8F0' },
   codeSnippetBox: { marginTop: 8, backgroundColor: '#020617', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#1E293B' },
   codeSnippetText: { color: '#34D399', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11 },
+  followUpWrapper: { marginTop: 6, flexDirection: 'row', flexWrap: 'wrap' },
+  followUpChip: { backgroundColor: '#064E3B', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, marginRight: 6, marginBottom: 4, borderWidth: 1, borderColor: '#059669' },
+  followUpText: { color: '#6EE7B7', fontSize: 11, fontWeight: '700' },
   timeText: { color: '#64748B', fontSize: 10, marginTop: 4, fontWeight: '600' },
   loadingRow: { flexDirection: 'row', alignItems: 'center', padding: 10 },
   loadingText: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginLeft: 8 },

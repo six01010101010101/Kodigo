@@ -11,6 +11,7 @@ class AIChatService {
       sender: result.sender,
       text: result.text,
       codeSnippet: result.codeSnippet,
+      followUpPrompts: result.followUpPrompts,
       createdAt: result.createdAt
     };
   }
@@ -21,6 +22,7 @@ class AIChatService {
       sender: m.sender,
       text: m.text,
       codeSnippet: m.codeSnippet,
+      followUpPrompts: m.followUpPrompts,
       createdAt: m.createdAt
     }));
   }
@@ -44,6 +46,7 @@ class AIChatService {
         sender: turn.sender,
         text: turn.text,
         codeSnippet: turn.codeSnippet,
+        followUpPrompts: turn.followUpPrompts,
         createdAt: turn.createdAt
       });
     });

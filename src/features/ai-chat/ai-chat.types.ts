@@ -4,6 +4,7 @@ export interface ChatMessage {
   text: string;
   createdAt: number;
   codeSnippet?: string;
+  followUpPrompts?: string[];
 }
 
 export interface ChatSession {

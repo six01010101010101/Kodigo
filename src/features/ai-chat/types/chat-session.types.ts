@@ -5,6 +5,7 @@ export interface ChatMessageTurn {
   sender: MessageSender;
   text: string;
   codeSnippet?: string;
+  followUpPrompts?: string[];
   createdAt: number;
 }
 
@@ -30,4 +31,5 @@ export interface GeminiProPayload {
 export interface GeminiProResult {
   reply: string;
   codeSnippet?: string;
+  followUpPrompts?: string[];
 }
