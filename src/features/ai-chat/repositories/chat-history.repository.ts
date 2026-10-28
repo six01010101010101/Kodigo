@@ -3,6 +3,8 @@ import { ChatMessageTurn } from '../types/chat-session.types';
 
 const LOCAL_STORAGE_KEY = 'kodigo_chat_history_v2';
 const SESSION_KEY = 'kodigo_active_chat_session';
+const ACTIVITY_KEY = 'kodigo_chat_last_activity_v2';
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutos
 
 class ChatHistoryRepository {
   private localMessages: ChatMessageTurn[] = [];
@@ -12,6 +14,8 @@ class ChatHistoryRepository {
   }
 
   private loadFromLocal(): void {
+    if (this.checkAndResetIfExpired()) return;
+
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (raw) {
       try {
@@ -22,7 +26,31 @@ class ChatHistoryRepository {
     }
   }
 
+  checkAndResetIfExpired(): boolean {
+    const raw = localStorage.getItem(ACTIVITY_KEY);
+    const lastActivity = raw ? Number(raw) : 0;
+    const now = Date.now();
+
+    if (lastActivity > 0 && now - lastActivity > INACTIVITY_TIMEOUT_MS) {
+      this.clearHistory();
+      localStorage.setItem(ACTIVITY_KEY, String(now));
+      return true;
+    }
+
+    if (!lastActivity) {
+      localStorage.setItem(ACTIVITY_KEY, String(now));
+    }
+    return false;
+  }
+
+  touchActivity(): void {
+    localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
+  }
+
   getMessages(): ChatMessageTurn[] {
+    if (this.checkAndResetIfExpired()) {
+      return [];
+    }
     return [...this.localMessages];
   }
 
@@ -44,6 +72,7 @@ class ChatHistoryRepository {
   }
 
   async saveMessage(msg: ChatMessageTurn): Promise<void> {
+    this.touchActivity();
     this.localMessages.push(msg);
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.localMessages));
 

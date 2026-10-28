@@ -5,7 +5,6 @@ import { chatHistoryRepository } from './repositories/chat-history.repository';
 class AIChatService {
   async askPytho(prompt: string): Promise<ChatMessage> {
     const result = await chatOrchestratorService.processUserMessage(prompt);
-    // Save to repository (local + Supabase Realtime)
     await chatHistoryRepository.saveMessage(result);
     return {
       id: result.id,
@@ -24,6 +23,18 @@ class AIChatService {
       codeSnippet: m.codeSnippet,
       createdAt: m.createdAt
     }));
+  }
+
+  checkAndResetExpiredSession(): boolean {
+    return chatHistoryRepository.checkAndResetIfExpired();
+  }
+
+  touchActivity(): void {
+    chatHistoryRepository.touchActivity();
+  }
+
+  clearHistory(): void {
+    chatHistoryRepository.clearHistory();
   }
 
   subscribeRealtime(onNewMessage: (msg: ChatMessage) => void): () => void {

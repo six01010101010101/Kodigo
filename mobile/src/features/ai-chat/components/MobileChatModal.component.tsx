@@ -20,23 +20,22 @@ interface MobileChatModalProps {
 }
 
 export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClose }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'init',
-      sender: 'pytho',
-      text: 'Sssss! Olá! Eu sou o Pytho IA, seu companheiro de jornada no Kodigo. Pode me perguntar qualquer coisa. Como você está hoje?',
-      createdAt: Date.now(),
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [lastActiveTime, setLastActiveTime] = useState<number>(0);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (visible) {
+      const now = Date.now();
+      if (!lastActiveTime || now - lastActiveTime > 30 * 60 * 1000) {
+        setMessages([]);
+      }
+      setLastActiveTime(now);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
-  }, [visible, messages, loading]);
+  }, [visible]);
 
   const handleSend = async (textToSend?: string) => {
     const q = textToSend || input;
@@ -80,6 +79,13 @@ export const MobileChatModal: React.FC<MobileChatModalProps> = ({ visible, onClo
         </View>
 
         <ScrollView ref={scrollRef} style={styles.messagesList} contentContainerStyle={styles.messagesContent}>
+          {messages.length === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20 }}>
+              <Text style={{ fontSize: 48, marginBottom: 12 }}>🐍</Text>
+              <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginBottom: 6 }}>Nova Conversa com Pytho IA</Text>
+              <Text style={{ color: '#94A3B8', fontSize: 12, textAlign: 'center', lineHeight: 18 }}>Pergunte qualquer coisa sobre ciência, tecnologia, programação, cotidiano ou sobre o seu dia!</Text>
+            </View>
+          )}
           {messages.map((m) => {
             const isUser = m.sender === 'user';
             return (
