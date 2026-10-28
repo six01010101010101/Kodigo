@@ -67,14 +67,14 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
 
   const handleConfigureApiKey = () => {
     const current = localStorage.getItem('kodigo_gemini_api_key') || '';
-    const entered = window.prompt('Insira sua Chave de API Google Gemini Pro (opcional):', current);
+    const entered = window.prompt('Configuração de Chave Pytho IA (opcional):', current);
     if (entered !== null) {
       if (entered.trim()) {
         localStorage.setItem('kodigo_gemini_api_key', entered.trim());
-        alert('Chave do Gemini Pro configurada com sucesso para o Pytho IA!');
+        alert('Chave configurada com sucesso para o Pytho IA!');
       } else {
         localStorage.removeItem('kodigo_gemini_api_key');
-        alert('Chave removida. Usando n8n / Gemini Pro oficial.');
+        alert('Chave removida. Usando servidor Pytho IA oficial.');
       }
     }
   };
@@ -99,7 +99,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={handleConfigureApiKey} className="p-1.5 rounded-xl border border-duo-border dark:border-slate-700 text-duo-gray hover:text-duo-charcoal dark:hover:text-white" title="Configurar Gemini Pro API Key">
+            <button onClick={handleConfigureApiKey} className="p-1.5 rounded-xl border border-duo-border dark:border-slate-700 text-duo-gray hover:text-duo-charcoal dark:hover:text-white" title="Configurar Chave Pytho IA">
               <Key className="w-4 h-4" />
             </button>
             <button onClick={onClose} className="p-1 text-duo-gray hover:text-duo-charcoal dark:hover:text-white">
@@ -125,7 +125,7 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
           {loading && (
             <div className="flex items-center gap-2 text-xs font-bold text-duo-gray">
               <Bot className="w-4 h-4 animate-spin text-duo-green" />
-              <span>Pytho IA está pensando com Gemini Pro...</span>
+              <span>Pytho IA está digitando...</span>
             </div>
           )}
           <div ref={messagesEndRef} />

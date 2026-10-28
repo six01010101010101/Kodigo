@@ -2,6 +2,7 @@ import { GeminiProPayload, GeminiProResult } from '../types/chat-session.types';
 
 class GeminiProService {
   private n8nWebhookUrl = 'http://localhost:5678/webhook/kodigo-ai-tutor';
+  private edgeFunctionUrl = 'https://oxaydmsemyjrmyhnxwpt.supabase.co/functions/v1/pytho-chat';
   private defaultEmail = 'kobaofc1@gmail.com';
 
   async queryGeminiPro(payload: GeminiProPayload): Promise<GeminiProResult | null> {
@@ -25,13 +26,17 @@ class GeminiProService {
       });
       if (response.ok) {
         const data = (await response.json()) as { reply: string; codeSnippet?: string };
-        return { reply: data.reply, codeSnippet: data.codeSnippet };
+        if (data.reply) return { reply: data.reply, codeSnippet: data.codeSnippet };
       }
     } catch {
-      // Continue to direct API check
+      // Continue
     }
 
-    // 2. Try Direct Gemini Pro API with stored key
+    // 2. Try Supabase Edge Function
+    const edgeResult = await this.callEdgeFunction(payload, currentTime, currentDate, timeZone);
+    if (edgeResult) return edgeResult;
+
+    // 3. Try Direct Gemini Pro API with stored key
     const apiKey = localStorage.getItem('kodigo_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
     if (apiKey) {
       try {
@@ -41,6 +46,37 @@ class GeminiProService {
       }
     }
 
+    return null;
+  }
+
+  private async callEdgeFunction(
+    payload: GeminiProPayload,
+    currentTime: string,
+    currentDate: string,
+    timeZone: string
+  ): Promise<GeminiProResult | null> {
+    try {
+      const apiKey = localStorage.getItem('kodigo_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
+      const res = await fetch(this.edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey ? { 'x-gemini-key': apiKey } : {})
+        },
+        body: JSON.stringify({
+          prompt: payload.prompt,
+          history: payload.conversationHistory,
+          clientTime: { timeZone, localTime: currentTime, localDate: currentDate },
+          apiKey
+        })
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { reply?: string; codeSnippet?: string };
+        if (data.reply) return { reply: data.reply, codeSnippet: data.codeSnippet };
+      }
+    } catch {
+      // Ignored
+    }
     return null;
   }
 

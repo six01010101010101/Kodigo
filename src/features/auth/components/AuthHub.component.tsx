@@ -20,13 +20,11 @@ export const AuthHub: React.FC<AuthHubProps> = ({ onAuthenticated, onExploreAsGu
   const handleOAuth = async (provider: 'google' | 'github') => {
     soundService.playClick();
     setLoading(true);
+    setErrorMsg('');
     try {
-      const user = await authService.loginWithOAuth(provider);
-      soundService.playStreakFanfare();
-      onAuthenticated(user);
-    } catch {
-      setErrorMsg('Falha ao autenticar com provedor social.');
-    } finally {
+      await authService.loginWithOAuth(provider);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Falha ao autenticar com provedor social.');
       setLoading(false);
     }
   };
@@ -41,11 +39,13 @@ export const AuthHub: React.FC<AuthHubProps> = ({ onAuthenticated, onExploreAsGu
     setLoading(true);
     setErrorMsg('');
     try {
-      const user = await authService.loginWithEmail(email, password);
+      const user = mode === 'signup'
+        ? await authService.signUpWithEmail(email, password)
+        : await authService.loginWithEmail(email, password);
       soundService.playStreakFanfare();
       onAuthenticated(user);
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Erro ao processar login.');
+      setErrorMsg(err instanceof Error ? err.message : 'Erro ao processar autenticação.');
     } finally {
       setLoading(false);
     }
