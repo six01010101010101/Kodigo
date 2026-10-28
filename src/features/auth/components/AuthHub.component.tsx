@@ -22,7 +22,11 @@ export const AuthHub: React.FC<AuthHubProps> = ({ onAuthenticated, onExploreAsGu
     setLoading(true);
     setErrorMsg('');
     try {
-      await authService.loginWithOAuth(provider);
+      const user = await authService.loginWithOAuth(provider);
+      if (user) {
+        soundService.playStreakFanfare();
+        onAuthenticated(user);
+      }
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Falha ao autenticar com provedor social.');
       setLoading(false);
