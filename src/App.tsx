@@ -11,13 +11,15 @@ import { HistoryView } from './features/history/components/HistoryView.component
 import { LeaderboardView } from './features/leaderboard/components/LeaderboardView.component';
 import { ProfileView } from './features/profile/components/ProfileView.component';
 import { AIChatDrawer } from './features/ai-chat/components/AIChatDrawer.component';
+import { ClashRoyaleChestModal } from './features/chest/components/ClashRoyaleChestModal.component';
+import { ChestRewardSummary } from './features/chest/types/chest.types';
 import { AuthHub } from './features/auth/components/AuthHub.component';
 import { authService } from './features/auth/auth.service';
 import { AuthUser } from './features/auth/auth.types';
 import { themeService } from './features/theme/theme.service';
 import { AppTheme } from './features/theme/theme.types';
 import { SIX_LEVEL_TRACKS, SERIOUS_UNITS } from './services/curriculum.data';
-import { UserGamificationState, Lesson, CodeTrack } from './types/kodigo.types';
+import { UserGamificationState, Lesson, CodeTrack, Unit } from './types/kodigo.types';
 
 export const App: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(() => authService.getCurrentUser());
@@ -28,6 +30,7 @@ export const App: React.FC = () => {
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isTracksOpen, setIsTracksOpen] = useState(false);
+  const [activeChestUnit, setActiveChestUnit] = useState<Unit | null>(null);
 
   const [tracks] = useState<CodeTrack[]>(SIX_LEVEL_TRACKS);
   const [activeTrack, setActiveTrack] = useState<CodeTrack>(SIX_LEVEL_TRACKS[0]);
@@ -64,6 +67,16 @@ export const App: React.FC = () => {
     );
     setMascotTip(`Sssssensacional! +${xpEarned} XP adicionados na sua jornada!`);
     setActiveLesson(null);
+  };
+
+  const handleChestClaim = (summary: ChestRewardSummary) => {
+    setUserState((prev) => ({
+      ...prev,
+      xp: prev.xp + summary.totalXp,
+      gems: prev.gems + summary.totalGems,
+    }));
+    setMascotTip(`🏆 Baú Lendário Aberto! +${summary.totalXp} XP, +${summary.totalGems} Gemas e nova missão desbloqueada!`);
+    setActiveChestUnit(null);
   };
 
   if (!user && !isGuest) {
@@ -110,6 +123,7 @@ export const App: React.FC = () => {
                 }
                 setActiveLesson({ lesson: l, unitTitle: title });
               }}
+              onOpenChest={(u) => setActiveChestUnit(u)}
             />
             <CodePlayground />
           </>
@@ -135,19 +149,13 @@ export const App: React.FC = () => {
           onClose={() => setActiveLesson(null)}
           onComplete={handleLessonComplete}
           onLoseHeart={() => {
-            if (!userState.isPro) {
-              setUserState((prev) => ({ ...prev, hearts: Math.max(0, prev.hearts - 1) }));
-            }
+            if (!userState.isPro) setUserState((prev) => ({ ...prev, hearts: Math.max(0, prev.hearts - 1) }));
           }}
         />
       )}
 
       {isPricingOpen && (
-        <PricingModal
-          isPro={userState.isPro}
-          onClose={() => setIsPricingOpen(false)}
-          onTogglePro={() => setUserState((p) => ({ ...p, isPro: !p.isPro, hearts: 5 }))}
-        />
+        <PricingModal isPro={userState.isPro} onClose={() => setIsPricingOpen(false)} onTogglePro={() => setUserState((p) => ({ ...p, isPro: !p.isPro, hearts: 5 }))} />
       )}
 
       {isShopOpen && (
@@ -163,9 +171,7 @@ export const App: React.FC = () => {
             }
             return false;
           }}
-          onWatchAdOrPractice={() => {
-            setUserState((prev) => ({ ...prev, hearts: Math.min(prev.maxHearts, prev.hearts + 1) }));
-          }}
+          onWatchAdOrPractice={() => setUserState((prev) => ({ ...prev, hearts: Math.min(prev.maxHearts, prev.hearts + 1) }))}
           onBuyStreakFreeze={(cost) => {
             if (userState.gems >= cost) {
               setUserState((prev) => ({ ...prev, gems: prev.gems - cost }));
@@ -177,11 +183,15 @@ export const App: React.FC = () => {
       )}
 
       {isTracksOpen && (
-        <TracksModal
-          tracks={tracks}
-          activeTrackId={activeTrack.id}
-          onClose={() => setIsTracksOpen(false)}
-          onSelectTrack={setActiveTrack}
+        <TracksModal tracks={tracks} activeTrackId={activeTrack.id} onClose={() => setIsTracksOpen(false)} onSelectTrack={setActiveTrack} />
+      )}
+
+      {activeChestUnit && (
+        <ClashRoyaleChestModal
+          unitId={activeChestUnit.id}
+          unitTitle={activeChestUnit.title}
+          onClose={() => setActiveChestUnit(null)}
+          onClaim={handleChestClaim}
         />
       )}
 
