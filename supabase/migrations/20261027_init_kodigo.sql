@@ -1,97 +1,104 @@
--- ========================================================
--- Kodigo Platform - Database Schema & Realtime Setup
--- ========================================================
+-- Kodigo: core schema (profiles, curriculum, progress). RLS enabled on every table.
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- 1. Profiles Table
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  username TEXT UNIQUE NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  avatar_url TEXT,
-  xp INTEGER DEFAULT 0,
-  gems INTEGER DEFAULT 100,
-  hearts INTEGER DEFAULT 5,
-  max_hearts INTEGER DEFAULT 5,
-  streak INTEGER DEFAULT 0,
-  last_activity_date DATE DEFAULT CURRENT_DATE,
-  is_pro BOOLEAN DEFAULT FALSE,
-  two_factor_enabled BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  username text unique not null,
+  avatar_url text,
+  xp integer not null default 0 check (xp >= 0),
+  gems integer not null default 100 check (gems >= 0),
+  hearts integer not null default 5 check (hearts between 0 and 5),
+  streak integer not null default 0 check (streak >= 0),
+  is_pro boolean not null default false,
+  created_at timestamptz not null default now()
 );
 
--- 2. Tracks Table
-CREATE TABLE IF NOT EXISTS public.tracks (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  language TEXT NOT NULL,
-  icon TEXT NOT NULL,
-  description TEXT NOT NULL,
-  total_units INTEGER DEFAULT 4,
-  badge_color TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists public.tracks (
+  id text primary key,
+  name text not null,
+  language text not null,
+  icon text not null,
+  description text not null,
+  position integer not null default 0
 );
 
--- 3. Units Table
-CREATE TABLE IF NOT EXISTS public.units (
-  id TEXT PRIMARY KEY,
-  track_id TEXT REFERENCES public.tracks(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  order_index INTEGER NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists public.units (
+  id text primary key,
+  track_id text not null references public.tracks(id) on delete cascade,
+  title text not null,
+  description text not null,
+  position integer not null
 );
+create index if not exists idx_units_track on public.units(track_id);
 
--- 4. Lessons Table
-CREATE TABLE IF NOT EXISTS public.lessons (
-  id TEXT PRIMARY KEY,
-  unit_id TEXT REFERENCES public.units(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  xp_reward INTEGER DEFAULT 20,
-  order_index INTEGER NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists public.lessons (
+  id text primary key,
+  unit_id text not null references public.units(id) on delete cascade,
+  title text not null,
+  xp_reward integer not null default 20 check (xp_reward >= 0),
+  position integer not null
 );
+create index if not exists idx_lessons_unit on public.lessons(unit_id);
 
--- 5. User Progress Table
-CREATE TABLE IF NOT EXISTS public.user_progress (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  lesson_id TEXT REFERENCES public.lessons(id) ON DELETE CASCADE,
-  completed BOOLEAN DEFAULT FALSE,
-  completed_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, lesson_id)
+create table if not exists public.user_progress (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  lesson_id text not null references public.lessons(id) on delete cascade,
+  completed_at timestamptz not null default now(),
+  primary key (user_id, lesson_id)
 );
+create index if not exists idx_user_progress_lesson on public.user_progress(lesson_id);
 
--- 6. User Challenge History Table
-CREATE TABLE IF NOT EXISTS public.user_challenge_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  challenge_title TEXT NOT NULL,
-  is_correct BOOLEAN NOT NULL,
-  selected_answer TEXT NOT NULL,
-  correct_answer TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists public.user_challenge_history (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  challenge_title text not null,
+  is_correct boolean not null,
+  selected_answer text not null,
+  correct_answer text not null,
+  created_at timestamptz not null default now()
 );
+create index if not exists idx_history_user on public.user_challenge_history(user_id, created_at desc);
 
--- 7. AI Tutor Conversations Log
-CREATE TABLE IF NOT EXISTS public.ai_conversations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  prompt TEXT NOT NULL,
-  reply TEXT NOT NULL,
-  code_snippet TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+alter table public.profiles enable row level security;
+alter table public.tracks enable row level security;
+alter table public.units enable row level security;
+alter table public.lessons enable row level security;
+alter table public.user_progress enable row level security;
+alter table public.user_challenge_history enable row level security;
 
--- Enable Row Level Security (RLS)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_challenge_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.ai_conversations ENABLE ROW LEVEL SECURITY;
+-- Public read-only curriculum
+create policy "curriculum read tracks" on public.tracks for select to anon, authenticated using (true);
+create policy "curriculum read units" on public.units for select to anon, authenticated using (true);
+create policy "curriculum read lessons" on public.lessons for select to anon, authenticated using (true);
 
--- Realtime publication for dynamic progress updates
-ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles, public.user_progress;
+-- Owner-only user data
+create policy "profiles select own" on public.profiles for select to authenticated using ((select auth.uid()) = id);
+create policy "profiles update own" on public.profiles for update to authenticated
+  using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
+create policy "progress select own" on public.user_progress for select to authenticated using ((select auth.uid()) = user_id);
+create policy "progress insert own" on public.user_progress for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy "history select own" on public.user_challenge_history for select to authenticated using ((select auth.uid()) = user_id);
+create policy "history insert own" on public.user_challenge_history for insert to authenticated with check ((select auth.uid()) = user_id);
+
+-- Clients may only edit cosmetic columns; xp/gems/hearts/streak/is_pro are server-controlled.
+revoke update on public.profiles from authenticated, anon;
+grant update (username, avatar_url) on public.profiles to authenticated;
+
+-- Auto-create a profile on signup
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  insert into public.profiles (id, username, avatar_url)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'user_name', split_part(new.email, '@', 1)) || '_' || substr(new.id::text, 1, 4),
+    new.raw_user_meta_data ->> 'avatar_url'
+  );
+  return new;
+end $$;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+alter publication supabase_realtime add table public.profiles, public.user_progress;

@@ -35,7 +35,8 @@ services:
       - NODE_ENV=development
       - VITE_PORT=5173
       - VITE_N8N_URL=http://localhost:5678
-      - VITE_SUPABASE_URL=https://ewkhfqezeaufqpyaqamn.supabase.co
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
     networks:
       - kodigo-network
     depends_on:

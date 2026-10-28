@@ -1,34 +1,36 @@
--- ========================================================
--- Kodigo Platform - Chat Sessions & Conversational Memory
--- ========================================================
+-- Kodigo: Pytho chat history. Owner-only access; realtime enabled for web + mobile sync.
 
-CREATE TABLE IF NOT EXISTS public.chat_sessions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_email TEXT NOT NULL DEFAULT 'cobaloficial1@gmail.com',
-  title TEXT NOT NULL DEFAULT 'Conversa com Pytho IA',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists public.chat_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null default 'Conversa com Pytho',
+  created_at timestamptz not null default now()
 );
+create index if not exists idx_chat_sessions_user on public.chat_sessions(user_id, created_at desc);
 
-CREATE TABLE IF NOT EXISTS public.chat_messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  session_id UUID REFERENCES public.chat_sessions(id) ON DELETE CASCADE,
-  sender TEXT NOT NULL CHECK (sender IN ('user', 'pytho')),
-  message TEXT NOT NULL,
-  code_snippet TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists public.chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.chat_sessions(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  sender text not null check (sender in ('user', 'pytho')),
+  message text not null check (char_length(message) between 1 and 8000),
+  code_snippet text,
+  created_at timestamptz not null default now()
 );
+create index if not exists idx_chat_messages_session on public.chat_messages(session_id, created_at);
+create index if not exists idx_chat_messages_user on public.chat_messages(user_id);
 
-CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON public.chat_messages(session_id);
-CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON public.chat_messages(created_at);
+alter table public.chat_sessions enable row level security;
+alter table public.chat_messages enable row level security;
 
--- Enable RLS
-ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+create policy "sessions own" on public.chat_sessions for all to authenticated
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
--- Allow public read/write for session synchronization
-CREATE POLICY "Public chat_sessions access" ON public.chat_sessions FOR ALL USING (true);
-CREATE POLICY "Public chat_messages access" ON public.chat_messages FOR ALL USING (true);
+create policy "messages own" on public.chat_messages for all to authenticated
+  using ((select auth.uid()) = user_id)
+  with check (
+    (select auth.uid()) = user_id
+    and exists (select 1 from public.chat_sessions s where s.id = session_id and s.user_id = (select auth.uid()))
+  );
 
--- Enable Supabase Realtime for instant synchronization between Web and Mobile
-ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_sessions, public.chat_messages;
+alter publication supabase_realtime add table public.chat_messages;

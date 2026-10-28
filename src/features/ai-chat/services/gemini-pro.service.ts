@@ -32,7 +32,7 @@ class GeminiProService {
     }
 
     // 2. Try Direct Gemini Pro API with stored key
-    const apiKey = localStorage.getItem('kodigo_gemini_api_key') || ((import.meta as unknown as { env: Record<string, string> }).env?.VITE_GEMINI_API_KEY);
+    const apiKey = localStorage.getItem('kodigo_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
     if (apiKey) {
       try {
         return await this.callDirectGeminiPro(payload, apiKey, currentTime, currentDate, timeZone);
