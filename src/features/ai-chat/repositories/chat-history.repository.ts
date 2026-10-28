@@ -73,8 +73,13 @@ class ChatHistoryRepository {
 
   async saveMessage(msg: ChatMessageTurn): Promise<void> {
     this.touchActivity();
-    this.localMessages.push(msg);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.localMessages));
+    const alreadySaved = this.localMessages.some(
+      (m) => m.id === msg.id || (m.sender === msg.sender && m.text.trim() === msg.text.trim())
+    );
+    if (!alreadySaved) {
+      this.localMessages.push(msg);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.localMessages));
+    }
 
     try {
       const { data } = await supabase.auth.getUser();
@@ -114,7 +119,10 @@ class ChatHistoryRepository {
             code_snippet?: string;
             created_at: string;
           };
-          if (row && !this.localMessages.some((m) => m.id === row.id)) {
+          const alreadyExists = this.localMessages.some(
+            (m) => m.id === row.id || (m.sender === row.sender && m.text.trim() === row.message.trim())
+          );
+          if (row && !alreadyExists) {
             const incoming: ChatMessageTurn = {
               id: row.id,
               sender: row.sender,

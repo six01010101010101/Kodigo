@@ -3,6 +3,13 @@ import { geminiProService } from './gemini-pro.service';
 import { aiConversationalService } from './ai-conversational.service';
 import { aiKnowledgeService } from './ai-knowledge.service';
 
+const generateUuid = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return '00000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0');
+};
+
 class ChatOrchestratorService {
   private memoryContext: ChatMemoryContext = {
     recentTurns: []
@@ -28,7 +35,7 @@ class ChatOrchestratorService {
     if (geminiResponse?.reply) {
       this.recordTurn(raw, geminiResponse.reply);
       return {
-        id: `msg_${Date.now()}`,
+        id: generateUuid(),
         sender: 'pytho',
         text: geminiResponse.reply,
         codeSnippet: geminiResponse.codeSnippet,
@@ -36,7 +43,7 @@ class ChatOrchestratorService {
       };
     }
 
-    // 2. High-Empathy Conversational Engine (emotions, time/date, greetings)
+    // 2. High-Empathy Conversational Engine (emotions, health, time/date, greetings)
     const lastTurn = this.memoryContext.recentTurns[this.memoryContext.recentTurns.length - 1];
     const prevPytho = lastTurn?.pythoResponse?.toLowerCase() || '';
     const askedAboutUser = prevPytho.includes('e com você') || prevPytho.includes('e você') || prevPytho.includes('como você');
@@ -45,7 +52,7 @@ class ChatOrchestratorService {
     if (convResult) {
       this.recordTurn(raw, convResult.text);
       return {
-        id: `msg_${Date.now()}`,
+        id: generateUuid(),
         sender: 'pytho',
         text: convResult.text,
         codeSnippet: convResult.codeSnippet,
@@ -53,15 +60,15 @@ class ChatOrchestratorService {
       };
     }
 
-    // 3. Universal Knowledge Engine (answers 100% of any subject)
+    // 3. Universal Knowledge & Friend Chat Engine
     const knowledgeResult = aiKnowledgeService.findKnowledgeAnswer(raw);
     const finalReply = knowledgeResult || {
-      text: `Entendido perfeitamente! Como o Pytho IA, posso te dizer que "${raw}" é um assunto fascinante. Me diga qual aspecto disso você quer que eu detalhe primeiro!`
+      text: `Nossa, concordo totalmente com você! É tão bom bater um papo leve e trocar ideias sobre isso. O que mais você tem feito de bom ultimamente?`
     };
 
     this.recordTurn(raw, finalReply.text);
     return {
-      id: `msg_${Date.now()}`,
+      id: generateUuid(),
       sender: 'pytho',
       text: finalReply.text,
       codeSnippet: finalReply.codeSnippet,

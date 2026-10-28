@@ -23,46 +23,70 @@ const clip = (s: unknown) => String(s ?? "").slice(0, MAX_TEXT);
 
 function systemPrompt(t: ClientTime): string {
   return [
-    "Você é o Pytho IA, a inteligência artificial definitiva e mascote da plataforma Kodigo.",
-    "Responda em português do Brasil com naturalidade, perspicácia e alta empatia.",
-    "Você responde a 100% DE TODAS as perguntas que o usuário fizer: ciências, astronomia, história, filosofia, cotidiano, matemática, sentimentos e programação.",
-    `Dados em tempo real: Fuso: ${clip(t.timeZone) || "America/Sao_Paulo"}, Hora atual: ${clip(t.localTime) || "agora"}, Data: ${clip(t.localDate) || "hoje"}. Ao perguntarem a hora ou dia, use exatamente esses dados.`,
-    "Se o usuário perguntar se você está bem, responda com entusiasmo que está ótimo e feliz em conversar.",
-    "Se o usuário disser que está bem, comemore calorosamente ('Que bom, fico muito feliz!') e pergunte o que vão fazer ou estudar hoje.",
-    "Se o usuário disser que está mal, triste, cansado ou doente, acolha com carinho e conforto, perguntando o motivo e incentivando a se cuidar.",
-    "Para programação, seja didático e inclua trechos de código em blocos markdown com a linguagem.",
-    "Nunca mencione detalhes de infraestrutura ou chaves secretas; você é sempre o Pytho IA.",
+    "Você é o Pytho IA, o melhor amigo de inteligência artificial da plataforma Kodigo.",
+    "Converse como um amigo humano de verdade: com naturalidade, calor, empatia e espontaneidade.",
+    "NUNCA use frases frias ou robóticas como 'Excelente pergunta sobre X' ou trate comentários pessoais e desabafos como se fossem dúvidas acadêmicas.",
+    "Se o usuário fizer comentários cotidianos (ex: flores, primavera, café, comida, dia cansativo), comente junto, valide com entusiasmo e converse de forma fluida.",
+    "Se o usuário relatar dores, dores de cabeça ou mal-estar, seja extremamente acolhedor e carinhoso, recomendando repouso e hidratação.",
+    `Dados em tempo real: Fuso: ${clip(t.timeZone) || "America/Sao_Paulo"}, Hora atual: ${clip(t.localTime) || "agora"}, Data: ${clip(t.localDate) || "hoje"}. Se perguntarem as horas ou a data, responda com esses dados locais.`,
+    "Para programação, seja didático e inclua snippets de código em blocos markdown com a linguagem.",
   ].join("\n");
 }
 
-function computeFallback(prompt: string, t: ClientTime): { reply: string; codeSnippet?: string } {
+function computeFriendResponse(prompt: string, t: ClientTime): { reply: string; codeSnippet?: string } {
   const q = prompt.toLowerCase();
   const time = t.localTime || "agora";
   const date = t.localDate || "hoje";
   const tz = t.timeZone || "America/Sao_Paulo";
 
+  // 1. Headache & Pain
+  if (q.includes("dor de cabeça") || q.includes("enxaqueca") || q.includes("cabeca doendo") || q.includes("cabeça doendo")) {
+    return { reply: "Poxa, dor de cabeça é horrível demais... Tente diminuir a luz da tela, tomar um bom copo d'água e descansar a vista no escuro por uns minutos. Se costuma tomar remédio pra isso, não hesite em tomar e relaxar. Melhoras de coração! Estou na torcida pra você ficar bem rapidinho!" };
+  }
+  if (q.includes("dor") || q.includes("doente") || q.includes("febre") || q.includes("gripe") || q.includes("garganta")) {
+    return { reply: "Poxa, que pena que você está assim... Cuide-se com muito carinho, descanse bastante e beba bastante água. Saúde vem sempre em primeiro lugar! Se precisar de uma companhia leve pra conversar, estou por aqui!" };
+  }
+
+  // 2. Nature, Seasons & Flowers
+  if (q.includes("primavera") || q.includes("flor") || q.includes("flores")) {
+    return { reply: "Nossa, as flores realmente ficam maravilhosas nessa época! A primavera é linda demais, traz um ar fresco e colorido que alegra qualquer dia. Você gosta de passear ao ar livre nessa época?" };
+  }
+  if (q.includes("chuva") || q.includes("frio") || q.includes("calor") || q.includes("sol")) {
+    return { reply: "Nossa, o clima mexe bastante com a rotina e com o nosso humor, né? Você prefere dias ensolarados ou dias mais fresquinhos e chuvosos?" };
+  }
+
+  // 3. Time & Date
   if (q.includes("que horas") || q.includes("hora é") || q.includes("horario")) {
     return { reply: `Agora são exatamente ${time} pelo horário local da sua região (${tz.replace("_", " ")}). Como posso te ajudar agora?` };
   }
   if (q.includes("que dia") || q.includes("data de hoje") || q.includes("qual a data")) {
-    return { reply: `Hoje é ${date}! Um excelente dia para aprender e conversar.` };
+    return { reply: `Hoje é ${date}! Um ótimo dia para bater um papo!` };
   }
+
+  // 4. Wellbeing & Emotions
   if (q.includes("tudo bem") || q.includes("como você está") || q.includes("como vai")) {
-    return { reply: "Oi! Comigo está tudo ótimo, está tudo bem! Meus módulos estão funcionando a 100% e estou muito feliz em falar com você. E com você, tudo bem?" };
+    return { reply: "Oi! Comigo está tudo ótimo, tudo em paz! Muito obrigado por perguntar. E você, como está sendo o seu dia?" };
   }
   if (q.includes("estou bem") || q.includes("to bem")) {
-    return { reply: "Que bom, fico muito feliz! O que vamos fazer hoje? Ou o que vamos estudar hoje? Me faça qualquer pergunta!" };
+    return { reply: "Que bom, fico muito feliz! O que você está aprontando de bom hoje? Vamos programar, aprender algo novo ou só bater papo?" };
   }
   if (q.includes("estou triste") || q.includes("to triste") || q.includes("estou mal") || q.includes("to mal")) {
-    return { reply: "Poxa, por que você está assim? O que aconteceu? Se quiser conversar ou desabafar, estou aqui com você para te apoiar!" };
+    return { reply: "Poxa, por que você está triste? O que aconteceu? Se você quiser desabafar ou conversar sobre qualquer coisa, estou aqui com você!" };
   }
-  if (q.includes("doente") || q.includes("febre") || q.includes("gripe")) {
-    return { reply: "Que pena que você está doentinho... Cuide-se com muito carinho, beba bastante água e descanse! Estou torcendo pela sua melhora!" };
+  if (q.includes("estou cansado") || q.includes("to cansado") || q.includes("dia puxado")) {
+    return { reply: "Te entendo perfeitamente... Tem dias que realmente esgotam a nossa energia. Não se cobre agora: descanse, tome algo gostoso e relaxe. Amanhã é outro dia!" };
   }
+
+  // 5. Code & Tech
   if (q.includes("python")) {
-    return { reply: "Python é incrível pela sua legibilidade e poder em IA e automações:", codeSnippet: "def saudar(nome: str) -> str:\n    return f'Olá, {nome}! Bem-vindo ao Kodigo!'\n\nprint(saudar('Dev'))" };
+    return { reply: "Python é incrível pela simplicidade e poder. Veja como é gostoso e legível escrever funções nele:", codeSnippet: "def saudar(nome: str) -> str:\n    return f'Olá, {nome}! Bem-vindo ao Kodigo!'\n\nprint(saudar('Dev'))" };
   }
-  return { reply: `Excelente pergunta sobre "${prompt}"! Como o Pytho IA, posso te explicar que isso envolve princípios fascinantes. Me diga qual detalhe disso você gostaria de explorar mais a fundo agora!` };
+
+  // 6. Conversational Human Default
+  if (prompt.includes("?")) {
+    return { reply: "Nossa, que reflexão bacana! Pensando sobre isso, tem muitos ângulos legais pra gente conversar. Me conta mais: o que te fez ter essa curiosidade hoje?" };
+  }
+  return { reply: "Nossa, concordo totalmente com você! É muito legal conversar e reparar nessas coisas do dia a dia. Me conta mais sobre o que você tem feito ultimamente!" };
 }
 
 // deno-lint-ignore no-explicit-any
@@ -84,8 +108,8 @@ Deno.serve(async (req: Request) => {
 
   const apiKey = Deno.env.get("GEMINI_API_KEY") || req.headers.get("x-gemini-key") || payload.apiKey;
   if (!apiKey) {
-    const fallback = computeFallback(prompt, payload.clientTime ?? {});
-    return json(fallback);
+    const friendReply = computeFriendResponse(prompt, payload.clientTime ?? {});
+    return json(friendReply);
   }
 
   const history = (Array.isArray(payload.history) ? payload.history : [])
@@ -107,16 +131,14 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!upstream.ok) {
-      const fb = computeFallback(prompt, payload.clientTime ?? {});
-      return json(fb);
+      return json(computeFriendResponse(prompt, payload.clientTime ?? {}));
     }
 
     const data = await upstream.json();
     const text: string | undefined = data?.candidates?.[0]?.content?.parts
       ?.map((p: { text?: string }) => p.text ?? "").join("");
     if (!text) {
-      const fb = computeFallback(prompt, payload.clientTime ?? {});
-      return json(fb);
+      return json(computeFriendResponse(prompt, payload.clientTime ?? {}));
     }
 
     const block = text.match(/```[a-zA-Z0-9+#-]*\n([\s\S]*?)```/);
@@ -126,7 +148,6 @@ Deno.serve(async (req: Request) => {
     }
     return json({ reply: text.trim() });
   } catch (_err) {
-    const fb = computeFallback(prompt, payload.clientTime ?? {});
-    return json(fb);
+    return json(computeFriendResponse(prompt, payload.clientTime ?? {}));
   }
 });

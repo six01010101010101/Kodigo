@@ -44,12 +44,15 @@ class MobileChatService {
       // Graceful fallback below
     }
 
-    // Dynamic empathetic fallback if edge function is unreachable
     const lower = prompt.toLowerCase();
-    let fallbackText = 'Sssss! Estou aqui com você para te apoiar em cada linha de código!';
+    let fallbackText = 'Nossa, concordo totalmente com você! É tão bom bater um papo leve e conversar sobre o dia a dia. Me conta mais sobre o que você tem feito!';
 
-    if (lower.includes('tudo bem') || lower.includes('como vai') || lower.includes('como você tá')) {
-      fallbackText = 'Sssss! Estou ótimo e cheio de energia para programar! E você, como está se sentindo hoje?';
+    if (lower.includes('dor de cabeça') || lower.includes('enxaqueca') || lower.includes('cabeça doendo')) {
+      fallbackText = 'Poxa, dor de cabeça é horrível demais... Tente diminuir a luz da tela, tomar um bom copo d\'água e descansar a vista no escuro por uns minutos. Melhoras de coração! Estou torcendo pra você ficar bem rapidinho!';
+    } else if (lower.includes('primavera') || lower.includes('flor') || lower.includes('flores')) {
+      fallbackText = 'Nossa, as flores realmente ficam maravilhosas nessa época! A primavera é linda demais, traz um ar fresco e colorido que alegra qualquer dia. Você gosta de passear ao ar livre nessa época?';
+    } else if (lower.includes('tudo bem') || lower.includes('como vai') || lower.includes('como você tá')) {
+      fallbackText = 'Oi! Comigo está tudo ótimo, tudo em paz! Muito obrigado por perguntar. E você, como está sendo o seu dia?';
     } else if (lower.includes('estou bem') || lower.includes('tô bem')) {
       fallbackText = 'Que notícia maravilhosa! Fico muito feliz! O que vamos construir ou estudar hoje?';
     } else if (lower.includes('estou mal') || lower.includes('estou triste') || lower.includes('doente')) {
