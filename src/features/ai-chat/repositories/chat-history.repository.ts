@@ -73,10 +73,7 @@ class ChatHistoryRepository {
 
   async saveMessage(msg: ChatMessageTurn): Promise<void> {
     this.touchActivity();
-    const alreadySaved = this.localMessages.some(
-      (m) => m.id === msg.id || (m.sender === msg.sender && m.text.trim() === msg.text.trim())
-    );
-    if (!alreadySaved) {
+    if (!this.localMessages.some((m) => m.id === msg.id)) {
       this.localMessages.push(msg);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.localMessages));
     }
@@ -119,10 +116,7 @@ class ChatHistoryRepository {
             code_snippet?: string;
             created_at: string;
           };
-          const alreadyExists = this.localMessages.some(
-            (m) => m.id === row.id || (m.sender === row.sender && m.text.trim() === row.message.trim())
-          );
-          if (row && !alreadyExists) {
+          if (row && !this.localMessages.some((m) => m.id === row.id)) {
             const incoming: ChatMessageTurn = {
               id: row.id,
               sender: row.sender,

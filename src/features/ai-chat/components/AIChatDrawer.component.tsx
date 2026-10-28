@@ -40,10 +40,8 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
     const timer = setInterval(() => setTick((t) => t + 1), 30000);
     const unsub = aiChatService.subscribeRealtime((incoming) => {
       setMessages((prev) => {
-        const isDuplicate = prev.some(
-          (m) => m.id === incoming.id || (m.sender === incoming.sender && m.text.trim() === incoming.text.trim())
-        );
-        return isDuplicate ? prev : [...prev, incoming];
+        if (prev.some((m) => m.id === incoming.id)) return prev;
+        return [...prev, incoming];
       });
       if (incoming.sender === 'pytho') {
         setLoading(false);
@@ -66,24 +64,14 @@ export const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ isOpen, onClose }) =
     soundService.playClick();
     aiChatService.touchActivity();
     const userMsg: ChatMessage = { id: `usr_${Date.now()}`, sender: 'user', text: textToSend, createdAt: Date.now() };
-    setMessages((prev) => {
-      const isDuplicate = prev.some(
-        (m) => m.id === userMsg.id || (m.sender === userMsg.sender && m.text.trim() === userMsg.text.trim())
-      );
-      return isDuplicate ? prev : [...prev, userMsg];
-    });
+    setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
     try {
       const reply = await aiChatService.askPytho(textToSend);
       setLoading(false);
-      setMessages((prev) => {
-        const isDuplicate = prev.some(
-          (m) => m.id === reply.id || (m.sender === reply.sender && m.text.trim() === reply.text.trim())
-        );
-        return isDuplicate ? prev : [...prev, reply];
-      });
+      setMessages((prev) => (prev.some((m) => m.id === reply.id) ? prev : [...prev, reply]));
       soundService.playCorrect();
     } catch {
       setLoading(false);

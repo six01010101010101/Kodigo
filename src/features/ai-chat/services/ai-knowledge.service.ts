@@ -5,90 +5,86 @@ export interface AIKnowledgeResult {
 
 class AIKnowledgeService {
   findKnowledgeAnswer(query: string): AIKnowledgeResult | null {
-    const q = query.toLowerCase();
+    const q = query.toLowerCase().trim();
 
-    // 1. Quick Logic & Math
+    // 1. Math, Logic & Direct Calculations
     if (q.includes('raiz quadrada') || q.includes('raiz de')) {
-      if (q.includes('144')) return { text: 'A raiz quadrada de 144 é 12, pois 12 × 12 = 144.' };
-      if (q.includes('16')) return { text: 'A raiz quadrada de 16 é 4, pois 4 × 4 = 16.' };
-      if (q.includes('25')) return { text: 'A raiz quadrada de 25 é 5, pois 5 × 5 = 25.' };
-      if (q.includes('64')) return { text: 'A raiz quadrada de 64 é 8, pois 8 × 8 = 64.' };
-      if (q.includes('81')) return { text: 'A raiz quadrada de 81 é 9, pois 9 × 9 = 81.' };
-      if (q.includes('100')) return { text: 'A raiz quadrada de 100 é 10, pois 10 × 10 = 100.' };
+      const match = q.match(/\b(\d+)\b/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        const sqrt = Math.sqrt(num);
+        return {
+          text: Number.isInteger(sqrt)
+            ? `A raiz quadrada de ${num} é ${sqrt}, pois ${sqrt} × ${sqrt} = ${num}.`
+            : `A raiz quadrada de ${num} é aproximadamente ${sqrt.toFixed(4)}.`
+        };
+      }
     }
 
-    // 2. Logic: JavaScript & TypeScript Reasoning
+    // 2. Direct Coding Commands ("crie", "faça", "escreva", "gere", "desenvolva")
+    if (q.startsWith('crie') || q.startsWith('faça') || q.startsWith('escreva') || q.startsWith('gere') || q.startsWith('desenvolva') || q.includes('codigo de') || q.includes('código de')) {
+      if (q.includes('botão') || q.includes('botao') || q.includes('button')) {
+        return {
+          text: 'Aqui está um componente de Botão 3D moderno em React com TypeScript e Tailwind CSS:',
+          codeSnippet: `import React from 'react';\n\ninterface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {\n  variant?: 'primary' | 'secondary' | 'danger';\n}\n\nexport const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', ...props }) => {\n  const colors = {\n    primary: 'bg-emerald-500 hover:bg-emerald-600 border-b-4 border-emerald-700 text-white',\n    secondary: 'bg-blue-500 hover:bg-blue-600 border-b-4 border-blue-700 text-white',\n    danger: 'bg-red-500 hover:bg-red-600 border-b-4 border-red-700 text-white'\n  };\n  return (\n    <button {...props} className={\`px-6 py-2.5 rounded-2xl font-black text-sm active:translate-y-1 transition-all \${colors[variant]}\`}>\n      {children}\n    </button>\n  );\n};`
+        };
+      }
+      if (q.includes('python') || q.includes('ordenar') || q.includes('função') || q.includes('funcao')) {
+        return {
+          text: 'Comando aplicado! Aqui está a solução com tipagem estrita e documentação clara em Python:',
+          codeSnippet: `def filtrar_e_ordenar(itens: list[dict], chave: str) -> list[dict]:\n    """Filtra itens válidos e ordena pela chave fornecida."""\n    validos = [item for item in itens if chave in item and item[chave] is not None]\n    return sorted(validos, key=lambda x: x[chave])\n\n# Exemplo de uso:\ndados = [{"nome": "Ana", "pontos": 80}, {"nome": "Beto", "pontos": 95}]\nprint(filtrar_e_ordenar(dados, "pontos"))`
+        };
+      }
+      if (q.includes('sql') || q.includes('tabela') || q.includes('query')) {
+        return {
+          text: 'Comando aplicado! Aqui está a estrutura SQL com chaves, índices e boas práticas:',
+          codeSnippet: `CREATE TABLE public.projetos (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,\n  titulo TEXT NOT NULL,\n  status TEXT DEFAULT 'ativo' CHECK (status IN ('ativo', 'concluido', 'pausado')),\n  created_at TIMESTAMPTZ DEFAULT now()\n);\n\nCREATE INDEX idx_projetos_user_id ON public.projetos(user_id);`
+        };
+      }
+    }
+
+    // 3. Problem Solving & Error Diagnostics
+    if (q.includes('erro') || q.includes('bug') || q.includes('não funciona') || q.includes('nao funciona') || q.includes('como resolver')) {
+      return {
+        text: 'Para resolver isso de forma definitiva, o primeiro passo é isolar a causa raiz:\n1. Verifique os logs e o stack trace no console.\n2. Inspecione se os tipos esperados coincidem com o valor recebido (evite tipos indefinidos ou nulos).\n3. Teste a função isoladamente com valores controlados.\nMe mostre a mensagem de erro exata ou o trecho de código que posso te dar a correção linha por linha!'
+      };
+    }
+
+    // 4. Fundamental Computer Science & Logic
     if (q.includes('==') && q.includes('===')) {
       return {
-        text: 'A diferença é a coerção de tipo:\n• == (igualdade solta): compara valores convertendo os tipos automaticamente (ex: "5" == 5 é true).\n• === (igualdade estrita): compara valor E tipo sem conversão (ex: "5" === 5 é false). Em código profissional, use sempre ===!',
-        codeSnippet: `console.log(0 == false);   // true  (converte tipos)\nconsole.log(0 === false);  // false (número !== booleano)`
+        text: 'A diferença é a coerção de tipos:\n• == (igualdade solta): converte os tipos antes de comparar (ex: 0 == "" é true).\n• === (igualdade estrita): compara valor E tipo sem conversão (ex: 0 === "" é false). Em produção, use sempre ===!',
+        codeSnippet: `console.log(false == 0);   // true  (coerção implícita)\nconsole.log(false === 0);  // false (booleano !== número)`
       };
     }
-    if (q.includes('let') && (q.includes('const') || q.includes('var'))) {
+    if (q.includes('recursão') || q.includes('recursao')) {
       return {
-        text: 'Em JS moderno (ES6+):\n• const: declaração imutável por reatribuição (use como padrão para 90% dos casos).\n• let: variável mutável com escopo de bloco { }.\n• var: obsoleto, possui escopo de função e sofre hoisting de forma imprevisível.',
-        codeSnippet: `const PI = 3.14159;\nlet contador = 0;\ncontador += 1; // permitido!`
-      };
-    }
-    if (q.includes('recursão') || q.includes('recursao') || q.includes('recursiva')) {
-      return {
-        text: 'Recursão é quando uma função chama a si mesma para resolver subproblemas menores. Todo algoritmo recursivo DEVE ter:\n1. Caso base (condição de parada para evitar stack overflow).\n2. Passo recursivo (chamada com entrada reduzida).',
-        codeSnippet: `function fatorial(n: number): number {\n  if (n <= 1) return 1; // Caso base\n  return n * fatorial(n - 1); // Passo recursivo\n}`
+        text: 'Recursão ocorre quando uma função resolve um problema chamando a si mesma com uma entrada menor, até atingir a condição de parada (caso base):',
+        codeSnippet: `function contagemRegressiva(n: number): void {\n  if (n <= 0) {\n    console.log("Fogo!");\n    return; // Caso base\n  }\n  console.log(n);\n  contagemRegressiva(n - 1); // Chamada recursiva\n}`
       };
     }
 
-    // 3. Python Essentials
-    if (q.includes('python')) {
-      return {
-        text: 'Python brilha pela clareza e sintaxe limpa. Por exemplo, list comprehensions permitem transformar dados em uma única linha legível:',
-        codeSnippet: `numeros = [1, 2, 3, 4, 5]\npares_dobrados = [n * 2 for n in numeros if n % 2 == 0]\nprint(pares_dobrados)  # [4, 8]`
-      };
-    }
-
-    // 4. Web, Backend & Databases
-    if (q.includes('sql') || q.includes('banco') || q.includes('postgres')) {
-      return {
-        text: 'No SQL relacional, o segredo da performance é indexação e relacionamentos normalizados. Sempre selecione apenas as colunas necessárias:',
-        codeSnippet: `SELECT id, username, streak\nFROM public.profiles\nWHERE streak >= 7\nORDER BY streak DESC\nLIMIT 5;`
-      };
-    }
-    if (q.includes('docker') || q.includes('container')) {
-      return {
-        text: 'O Docker empacota sua aplicação e todas as dependências em um container isolado e leve, garantindo comportamento idêntico no seu notebook e no servidor em produção.'
-      };
-    }
-
-    // 5. Science & Physics Curiosities
+    // 5. Science & Curiosities
     if (q.includes('céu é azul') || q.includes('ceu e azul')) {
       return {
-        text: 'O céu é azul por causa do fenômeno óptico chamado Espalhamento de Rayleigh: a luz do Sol é branca (composta por todas as cores), mas os gases da atmosfera terrestre espalham os comprimentos de onda mais curtos (azul e violeta) muito mais intensamente do que os tons vermelhos e amarelos!'
+        text: 'O céu é azul devido ao Espalhamento de Rayleigh: a luz branca do Sol atravessa a atmosfera e os gases espalham com muito mais intensidade as ondas de luz de menor comprimento (azul e violeta) em todas as direções!'
       };
     }
     if (q.includes('velocidade da luz')) {
       return {
-        text: 'A velocidade da luz no vácuo (c) é uma constante fundamental da física: exatamente 299.792.458 metros por segundo (aproximadamente 300.000 km/s). Pela Relatividade de Einstein, nada com massa pode atingir ou ultrapassar essa velocidade!'
-      };
-    }
-    if (q.includes('avião voa') || q.includes('aviao voa') || q.includes('voam')) {
-      return {
-        text: 'Aviões voam pela combinação do formato das asas (aerofólio) com o Princípio de Bernoulli e a 3ª Lei de Newton: o ar passa mais rápido por cima da asa, gerando menor pressão acima e maior pressão abaixo. Essa diferença de pressão cria a Força de Sustentação que empurra a aeronave para cima!'
-      };
-    }
-    if (q.includes('buraco negro')) {
-      return {
-        text: 'Buracos negros são corpos celestes cuja gravidade é tão descomunal que a velocidade de escape supera a própria velocidade da luz! O ponto onde nada mais consegue escapar é o Horizonte de Eventos.'
+        text: 'A velocidade da luz no vácuo é de exatamente 299.792.458 m/s (cerca de 300 mil km/s). Pela relatividade geral de Einstein, ela é a velocidade limite do universo.'
       };
     }
 
-    // 6. Conversational Human Default
-    if (query.includes('?')) {
+    // 6. Natural Conversational Synthesis (Talks directly about what user said)
+    if (q.includes('?')) {
       return {
-        text: `Essa é uma ótima pergunta! Analisando isso com lógica e clareza: esse assunto tem pontos muito interessantes. Me conta: o que despertou essa curiosidade em você hoje? Adoraria entender o seu ponto de vista!`
+        text: `Pensando sobre "${query.trim()}": a chave para entender isso é analisar o objetivo principal e como cada parte se conecta. O que você acha que seria a melhor abordagem nesse caso? Adoraria ouvir a sua ideia!`
       };
     }
 
     return {
-      text: `Nossa, concordo totalmente com você! É muito bom poder conversar e reparar nessas coisas com calma. O que mais tem passado pela sua cabeça ultimamente?`
+      text: `Entendi perfeitamente o seu ponto! É muito interessante observar como "${query.trim()}" se aplica no dia a dia. Quer que a gente explore mais a fundo ou gostaria de aplicar isso em um exemplo prático?`
     };
   }
 }

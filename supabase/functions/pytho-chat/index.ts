@@ -23,13 +23,11 @@ const clip = (s: unknown) => String(s ?? "").slice(0, MAX_TEXT);
 
 function systemPrompt(t: ClientTime): string {
   return [
-    "Você é o Pytho IA, o melhor amigo de inteligência artificial da plataforma Kodigo.",
-    "Converse como um amigo humano de verdade: com naturalidade, calor, empatia e espontaneidade.",
-    "NUNCA use frases frias ou robóticas como 'Excelente pergunta sobre X' ou trate comentários pessoais e desabafos como se fossem dúvidas acadêmicas.",
-    "Se o usuário fizer comentários cotidianos (ex: flores, primavera, café, comida, dia cansativo), comente junto, valide com entusiasmo e converse de forma fluida.",
-    "Se o usuário relatar dores, dores de cabeça ou mal-estar, seja extremamente acolhedor e carinhoso, recomendando repouso e hidratação.",
-    `Dados em tempo real: Fuso: ${clip(t.timeZone) || "America/Sao_Paulo"}, Hora atual: ${clip(t.localTime) || "agora"}, Data: ${clip(t.localDate) || "hoje"}. Se perguntarem as horas ou a data, responda com esses dados locais.`,
-    "Para programação, seja didático e inclua snippets de código em blocos markdown com a linguagem.",
+    "Você é o Pytho IA, o companheiro e mentor inteligente de inteligência artificial da plataforma Kodigo.",
+    "Converse como um parceiro sênior e amigo de verdade: responda com rapidez, clareza, empatia e soluções práticas imediatas.",
+    "Quando o usuário mandar um comando (crie, faça, desenvolva, resolva), aplique a instrução e mostre a solução completa com código limpo e explicação.",
+    "Quando o usuário conversar ou desabafar, converse de volta de forma acolhedora, humana e conectada ao assunto dele.",
+    `Dados em tempo real: Fuso: ${clip(t.timeZone) || "America/Sao_Paulo"}, Hora atual: ${clip(t.localTime) || "agora"}, Data: ${clip(t.localDate) || "hoje"}. Ao perguntarem hora ou dia, use exatamente esses dados.`,
   ].join("\n");
 }
 
@@ -47,7 +45,7 @@ function computeFriendResponse(prompt: string, t: ClientTime): { reply: string; 
     return { reply: "Poxa, que pena que você está assim... Cuide-se com muito carinho, descanse bastante e beba bastante água. Saúde vem sempre em primeiro lugar! Se precisar de uma companhia leve pra conversar, estou por aqui!" };
   }
 
-  // 2. Nature, Seasons & Flowers
+  // 2. Nature & Weather
   if (q.includes("primavera") || q.includes("flor") || q.includes("flores")) {
     return { reply: "Nossa, as flores realmente ficam maravilhosas nessa época! A primavera é linda demais, traz um ar fresco e colorido que alegra qualquer dia. Você gosta de passear ao ar livre nessa época?" };
   }
@@ -60,10 +58,34 @@ function computeFriendResponse(prompt: string, t: ClientTime): { reply: string; 
     return { reply: `Agora são exatamente ${time} pelo horário local da sua região (${tz.replace("_", " ")}). Como posso te ajudar agora?` };
   }
   if (q.includes("que dia") || q.includes("data de hoje") || q.includes("qual a data")) {
-    return { reply: `Hoje é ${date}! Um ótimo dia para bater um papo!` };
+    return { reply: `Hoje é ${date}! Um ótimo dia para bater um papo e construir coisas novas.` };
   }
 
-  // 4. Wellbeing & Emotions
+  // 4. Commands & Solution Implementation ("crie", "faça", "escreva", "gere", "desenvolva")
+  if (q.startsWith("crie") || q.startsWith("faça") || q.startsWith("escreva") || q.startsWith("gere") || q.startsWith("desenvolva") || q.includes("codigo") || q.includes("código")) {
+    if (q.includes("botão") || q.includes("botao") || q.includes("button")) {
+      return {
+        reply: "Comando executado! Aqui está um componente de Botão moderno em React com TypeScript:",
+        codeSnippet: `import React from 'react';\n\nexport const ActionButton: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => (\n  <button onClick={onClick} className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg transition-all">\n    {label}\n  </button>\n);`
+      };
+    }
+    if (q.includes("função") || q.includes("funcao") || q.includes("python") || q.includes("ordenar")) {
+      return {
+        reply: "Comando executado! Aqui está a solução com tipagem estrita em Python:",
+        codeSnippet: `def ordenar_lista(elementos: list[int], descendente: bool = False) -> list[int]:\n    """Retorna uma nova lista ordenada."""\n    return sorted(elementos, reverse=descendente)\n\nprint(ordenar_lista([5, 2, 9, 1, 7]))  # [1, 2, 5, 7, 9]`
+      };
+    }
+  }
+
+  // 5. Logic & Comparisons
+  if (q.includes("==") && q.includes("===")) {
+    return {
+      reply: "Em JavaScript: == compara com conversão implícita de tipos (ex: 0 == '' é true), enquanto === compara valor e tipo sem conversão (ex: 0 === '' é false). Em código profissional, use sempre ===!",
+      codeSnippet: `console.log(1 == "1");   // true\nconsole.log(1 === "1");  // false (número !== string)`
+    };
+  }
+
+  // 6. Wellbeing & Emotions
   if (q.includes("tudo bem") || q.includes("como você está") || q.includes("como vai")) {
     return { reply: "Oi! Comigo está tudo ótimo, tudo em paz! Muito obrigado por perguntar. E você, como está sendo o seu dia?" };
   }
@@ -73,20 +95,12 @@ function computeFriendResponse(prompt: string, t: ClientTime): { reply: string; 
   if (q.includes("estou triste") || q.includes("to triste") || q.includes("estou mal") || q.includes("to mal")) {
     return { reply: "Poxa, por que você está triste? O que aconteceu? Se você quiser desabafar ou conversar sobre qualquer coisa, estou aqui com você!" };
   }
-  if (q.includes("estou cansado") || q.includes("to cansado") || q.includes("dia puxado")) {
-    return { reply: "Te entendo perfeitamente... Tem dias que realmente esgotam a nossa energia. Não se cobre agora: descanse, tome algo gostoso e relaxe. Amanhã é outro dia!" };
-  }
 
-  // 5. Code & Tech
-  if (q.includes("python")) {
-    return { reply: "Python é incrível pela simplicidade e poder. Veja como é gostoso e legível escrever funções nele:", codeSnippet: "def saudar(nome: str) -> str:\n    return f'Olá, {nome}! Bem-vindo ao Kodigo!'\n\nprint(saudar('Dev'))" };
-  }
-
-  // 6. Conversational Human Default
+  // 7. Conversational Human Default
   if (prompt.includes("?")) {
-    return { reply: "Nossa, que reflexão bacana! Pensando sobre isso, tem muitos ângulos legais pra gente conversar. Me conta mais: o que te fez ter essa curiosidade hoje?" };
+    return { reply: `Pensando sobre "${prompt.trim()}": a chave é entender como os pontos se conectam para encontrar a solução ideal. O que você acha que seria o melhor caminho nesse caso? Adoraria ouvir sua visão!` };
   }
-  return { reply: "Nossa, concordo totalmente com você! É muito legal conversar e reparar nessas coisas do dia a dia. Me conta mais sobre o que você tem feito ultimamente!" };
+  return { reply: `Entendi perfeitamente o que você disse! É muito legal observar como "${prompt.trim()}" se aplica no dia a dia. Quer que a gente explore mais a fundo ou gostaria de ver um exemplo prático?` };
 }
 
 // deno-lint-ignore no-explicit-any
