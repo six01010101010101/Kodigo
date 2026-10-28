@@ -21,71 +21,82 @@ class AIKnowledgeService {
       }
     }
 
-    // 2. Direct Coding Commands ("crie", "faça", "escreva", "gere", "desenvolva")
-    if (q.startsWith('crie') || q.startsWith('faça') || q.startsWith('escreva') || q.startsWith('gere') || q.startsWith('desenvolva') || q.includes('codigo de') || q.includes('código de')) {
-      if (q.includes('botão') || q.includes('botao') || q.includes('button')) {
-        return {
-          text: 'Aqui está um componente de Botão 3D moderno em React com TypeScript e Tailwind CSS:',
-          codeSnippet: `import React from 'react';\n\ninterface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {\n  variant?: 'primary' | 'secondary' | 'danger';\n}\n\nexport const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', ...props }) => {\n  const colors = {\n    primary: 'bg-emerald-500 hover:bg-emerald-600 border-b-4 border-emerald-700 text-white',\n    secondary: 'bg-blue-500 hover:bg-blue-600 border-b-4 border-blue-700 text-white',\n    danger: 'bg-red-500 hover:bg-red-600 border-b-4 border-red-700 text-white'\n  };\n  return (\n    <button {...props} className={\`px-6 py-2.5 rounded-2xl font-black text-sm active:translate-y-1 transition-all \${colors[variant]}\`}>\n      {children}\n    </button>\n  );\n};`
-        };
-      }
-      if (q.includes('python') || q.includes('ordenar') || q.includes('função') || q.includes('funcao')) {
-        return {
-          text: 'Comando aplicado! Aqui está a solução com tipagem estrita e documentação clara em Python:',
-          codeSnippet: `def filtrar_e_ordenar(itens: list[dict], chave: str) -> list[dict]:\n    """Filtra itens válidos e ordena pela chave fornecida."""\n    validos = [item for item in itens if chave in item and item[chave] is not None]\n    return sorted(validos, key=lambda x: x[chave])\n\n# Exemplo de uso:\ndados = [{"nome": "Ana", "pontos": 80}, {"nome": "Beto", "pontos": 95}]\nprint(filtrar_e_ordenar(dados, "pontos"))`
-        };
-      }
-      if (q.includes('sql') || q.includes('tabela') || q.includes('query')) {
-        return {
-          text: 'Comando aplicado! Aqui está a estrutura SQL com chaves, índices e boas práticas:',
-          codeSnippet: `CREATE TABLE public.projetos (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,\n  titulo TEXT NOT NULL,\n  status TEXT DEFAULT 'ativo' CHECK (status IN ('ativo', 'concluido', 'pausado')),\n  created_at TIMESTAMPTZ DEFAULT now()\n);\n\nCREATE INDEX idx_projetos_user_id ON public.projetos(user_id);`
-        };
-      }
-    }
-
-    // 3. Problem Solving & Error Diagnostics
-    if (q.includes('erro') || q.includes('bug') || q.includes('não funciona') || q.includes('nao funciona') || q.includes('como resolver')) {
+    // 2. Fundamental Computer Science, Algorithms & Big O
+    if (q.includes('busca binária') || q.includes('busca binaria') || q.includes('binary search')) {
       return {
-        text: 'Para resolver isso de forma definitiva, o primeiro passo é isolar a causa raiz:\n1. Verifique os logs e o stack trace no console.\n2. Inspecione se os tipos esperados coincidem com o valor recebido (evite tipos indefinidos ou nulos).\n3. Teste a função isoladamente com valores controlados.\nMe mostre a mensagem de erro exata ou o trecho de código que posso te dar a correção linha por linha!'
+        text: 'A busca binária encontra um item em uma lista ordenada dividindo o intervalo de busca pela metade a cada passo. Complexidade O(log n):',
+        codeSnippet: `function buscaBinaria(arr: number[], alvo: number): number {\n  let inicio = 0, fim = arr.length - 1;\n  while (inicio <= fim) {\n    const meio = Math.floor((inicio + fim) / 2);\n    if (arr[meio] === alvo) return meio;\n    if (arr[meio] < alvo) inicio = meio + 1;\n    else fim = meio - 1;\n  }\n  return -1;\n}`
       };
     }
-
-    // 4. Fundamental Computer Science & Logic
-    if (q.includes('==') && q.includes('===')) {
+    if (q.includes('big o') || q.includes('complexidade de tempo')) {
       return {
-        text: 'A diferença é a coerção de tipos:\n• == (igualdade solta): converte os tipos antes de comparar (ex: 0 == "" é true).\n• === (igualdade estrita): compara valor E tipo sem conversão (ex: 0 === "" é false). Em produção, use sempre ===!',
-        codeSnippet: `console.log(false == 0);   // true  (coerção implícita)\nconsole.log(false === 0);  // false (booleano !== número)`
+        text: 'A notação Big O descreve o comportamento de tempo ou espaço de um algoritmo conforme o volume de dados (n) cresce:\n• O(1): Constante (ex: acesso a array por índice)\n• O(log n): Logarítmico (ex: busca binária)\n• O(n): Linear (ex: loop simples)\n• O(n log n): Quasilinear (ex: QuickSort/MergeSort)\n• O(n²): Quadrático (ex: loops aninhados/BubbleSort)'
       };
     }
     if (q.includes('recursão') || q.includes('recursao')) {
       return {
-        text: 'Recursão ocorre quando uma função resolve um problema chamando a si mesma com uma entrada menor, até atingir a condição de parada (caso base):',
-        codeSnippet: `function contagemRegressiva(n: number): void {\n  if (n <= 0) {\n    console.log("Fogo!");\n    return; // Caso base\n  }\n  console.log(n);\n  contagemRegressiva(n - 1); // Chamada recursiva\n}`
+        text: 'Recursão é uma técnica onde uma função chama a si mesma para resolver subproblemas menores até atingir um caso base:',
+        codeSnippet: `function fatorial(n: number): number {\n  if (n <= 1) return 1; // Caso base\n  return n * fatorial(n - 1); // Chamada recursiva\n}`
       };
     }
 
-    // 5. Science & Curiosities
+    // 3. Web & Frontend Architecture (React, CSS, APIs)
+    if (q.includes('useeffect') || q.includes('usememo') || q.includes('usecallback')) {
+      return {
+        text: 'Diferença entre os hooks essenciais do React:\n• useEffect: Executa efeitos colaterais após a renderização (chamadas de API, timers, subscrições).\n• useMemo: Memoriza o valor calculado de uma operação pesada para evitar recálculos.\n• useCallback: Memoriza a referência de uma função para não recriá-la a cada render.'
+      };
+    }
+    if (q.includes('flexbox') && q.includes('grid')) {
+      return {
+        text: 'CSS Flexbox vs CSS Grid:\n• Flexbox: Unidimensional (linhas OU colunas). Ideal para distribuir itens em uma barra de navegação, alinhar botões ou cartões.\n• CSS Grid: Bidimensional (linhas E colunas simultaneamente). Ideal para layouts completos de páginas, painéis e galerias complexas.'
+      };
+    }
+    if (q.includes('jwt') || q.includes('token') || q.includes('autenticação')) {
+      return {
+        text: 'JWT (JSON Web Token) é um padrão aberto (RFC 7519) para transmitir informações compactas e assinadas digitalmente. É composto por 3 partes separadas por pontos: Header (algoritmo), Payload (dados do usuário) e Signature (garantia de autenticidade).'
+      };
+    }
+    if (q.includes('cors')) {
+      return {
+        text: 'CORS (Cross-Origin Resource Sharing) é um mecanismo de segurança dos navegadores que bloqueia requisições HTTP feitas para um domínio diferente do originário, a menos que o servidor de destino responda com os cabeçalhos apropriados, como "Access-Control-Allow-Origin: *".'
+      };
+    }
+
+    // 4. Debugging & Error Solutions
+    if (q.includes('cannot read properties of undefined') || q.includes('null is not an object')) {
+      return {
+        text: 'Esse erro ocorre ao tentar acessar uma propriedade em uma variável que é null ou undefined. Para resolver:\n1. Use Optional Chaining: usuario?.endereco?.rua\n2. Use coalescência nula: const valor = dado ?? "padrao"\n3. Verifique se a requisição assíncrona já concluiu antes de renderizar.'
+      };
+    }
+    if (q.includes('maximum update depth exceeded')) {
+      return {
+        text: 'Esse erro no React indica um loop infinito de renderizações. A causa mais comum é disparar uma atualização de estado diretamente no corpo do componente ou passar uma função com invocação imediata no onClick (ex: onClick={setContador(1)} em vez de onClick={() => setContador(1)}).'
+      };
+    }
+
+    // 5. Science & General Knowledge
+    if (q.includes('buraco negro') || q.includes('buracos negros')) {
+      return {
+        text: 'Um buraco negro é uma região do espaço-tempo onde a gravidade é tão extrema que nada — nem mesmo a luz — consegue escapar após cruzar o chamado "Horizonte de Eventos". São formados pelo colapso gravitacional de estrelas supermassivas ao fim de suas vidas.'
+      };
+    }
     if (q.includes('céu é azul') || q.includes('ceu e azul')) {
       return {
-        text: 'O céu é azul devido ao Espalhamento de Rayleigh: a luz branca do Sol atravessa a atmosfera e os gases espalham com muito mais intensidade as ondas de luz de menor comprimento (azul e violeta) em todas as direções!'
+        text: 'O céu é azul devido ao Espalhamento de Rayleigh: os gases da atmosfera espalham os comprimentos de onda mais curtos da luz solar (azul e violeta) muito mais intensamente do que as cores de ondas longas como o vermelho.'
       };
     }
     if (q.includes('velocidade da luz')) {
       return {
-        text: 'A velocidade da luz no vácuo é de exatamente 299.792.458 m/s (cerca de 300 mil km/s). Pela relatividade geral de Einstein, ela é a velocidade limite do universo.'
+        text: 'A velocidade da luz no vácuo é de exatamente 299.792.458 m/s (aproximadamente 300.000 km/s). Pela teoria da relatividade restrita de Einstein, nada com massa pode ultrapassar essa velocidade.'
       };
     }
-
-    // 6. Natural Conversational Synthesis (Talks directly about what user said)
-    if (q.includes('?')) {
+    if (q.includes('ia') || q.includes('inteligência artificial') || q.includes('machine learning')) {
       return {
-        text: `Pensando sobre "${query.trim()}": a chave para entender isso é analisar o objetivo principal e como cada parte se conecta. O que você acha que seria a melhor abordagem nesse caso? Adoraria ouvir a sua ideia!`
+        text: 'Inteligência Artificial engloba sistemas computacionais capazes de executar tarefas que antes exigiam inteligência humana — como reconhecimento de padrões, tradução, raciocínio lógico e geração de código. Modelos modernos utilizam redes neurais profundas (Deep Learning) com arquitetura Transformer.'
       };
     }
 
-    return {
-      text: `Entendi perfeitamente o seu ponto! É muito interessante observar como "${query.trim()}" se aplica no dia a dia. Quer que a gente explore mais a fundo ou gostaria de aplicar isso em um exemplo prático?`
-    };
+    return null;
   }
 }
 

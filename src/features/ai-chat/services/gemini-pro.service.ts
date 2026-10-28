@@ -9,12 +9,14 @@ class GeminiProService {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
     const currentTime = new Date().toLocaleTimeString('pt-BR', { timeZone, hour: '2-digit', minute: '2-digit' });
     const currentDate = new Date().toLocaleDateString('pt-BR', { timeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const apiKey = localStorage.getItem('kodigo_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
 
-    // 1. Try N8N Docker webhook
+    // 1. Try N8N webhook with quick timeout
     try {
       const response = await fetch(this.n8nWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(400),
         body: JSON.stringify({
           prompt: payload.prompt,
           userEmail: this.defaultEmail,
@@ -26,37 +28,37 @@ class GeminiProService {
       });
       if (response.ok) {
         const data = (await response.json()) as { reply: string; codeSnippet?: string };
-        if (data.reply) return { reply: data.reply, codeSnippet: data.codeSnippet };
+        if (data.reply) return { reply: data.reply, codeSnippet: data.codeSnippet, isFallback: false };
       }
     } catch {
       // Continue
     }
 
     // 2. Try Supabase Edge Function
-    const edgeResult = await this.callEdgeFunction(payload, currentTime, currentDate, timeZone);
-    if (edgeResult) return edgeResult;
+    const edgeResult = await this.callEdgeFunction(payload, currentTime, currentDate, timeZone, apiKey);
+    if (edgeResult && !edgeResult.isFallback) return edgeResult;
 
-    // 3. Try Direct Gemini Pro API with stored key
-    const apiKey = localStorage.getItem('kodigo_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
+    // 3. Try Direct Gemini Pro API with stored key if edge was fallback
     if (apiKey) {
       try {
-        return await this.callDirectGeminiPro(payload, apiKey, currentTime, currentDate, timeZone);
+        const direct = await this.callDirectGeminiPro(payload, apiKey, currentTime, currentDate, timeZone);
+        if (direct) return direct;
       } catch {
         // Fallback
       }
     }
 
-    return null;
+    return edgeResult || null;
   }
 
   private async callEdgeFunction(
     payload: GeminiProPayload,
     currentTime: string,
     currentDate: string,
-    timeZone: string
+    timeZone: string,
+    apiKey?: string
   ): Promise<GeminiProResult | null> {
     try {
-      const apiKey = localStorage.getItem('kodigo_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
       const res = await fetch(this.edgeFunctionUrl, {
         method: 'POST',
         headers: {
@@ -76,12 +78,14 @@ class GeminiProService {
           codeSnippet?: string;
           follow_up_prompts?: string[];
           followUpPrompts?: string[];
+          isFallback?: boolean;
         };
         if (data.reply) {
           return {
             reply: data.reply,
             codeSnippet: data.codeSnippet,
-            followUpPrompts: data.follow_up_prompts || data.followUpPrompts
+            followUpPrompts: data.follow_up_prompts || data.followUpPrompts,
+            isFallback: data.isFallback === true
           };
         }
       }
@@ -98,25 +102,14 @@ class GeminiProService {
     currentDate: string,
     timeZone: string
   ): Promise<GeminiProResult | null> {
-    const systemPrompt = `Você é o Pytho IA, a serpente de código inteligente, carismática e amiga da plataforma Kodigo.
-Regras fundamentais:
-1. Responda a literalmente TUDO que o usuário perguntar (ciência, curiosidades, história, tecnologia, matemática, vida, etc.).
-2. Dados do usuário em tempo real: Horário local: ${currentTime}, Data: ${currentDate}, Fuso horário/região: ${timeZone}. Se perguntar as horas ou a data, responda exatamente com esses dados locais.
-3. Se o usuário perguntar se você está bem ("está tudo bem?", "como você tá?"), responda que está ótimo, alegre e pronto para conversar.
-4. Se o usuário responder que está bem ("estou bem"), diga: "Que bom, fico muito feliz! O que vamos fazer hoje? Ou o que vamos estudar hoje?"
-5. Se o usuário disser que está mal, triste, cansado ou doente, acolha-o com carinho, pergunte o motivo, recomende descansar e deixe claro que está por perto para apoiar.
-6. Para perguntas de programação (Full Stack, Python, C++, JS, TS, SQL, etc.), forneça explicações didáticas e snippets claros de código.
-7. Nunca mencione modelos internos ou credenciais privadas; para o usuário, você é simplesmente o Pytho IA.`;
+    const systemPrompt = `Você é o Pytho IA, mentor inteligente e amigo da plataforma Kodigo.
+1. Responda a qualquer dúvida ou comando (ciência, tecnologia, programação, cotidiano).
+2. Horário local: ${currentTime}, Data: ${currentDate}, Fuso: ${timeZone}.
+3. Sem clichês como 'Excelente pergunta sobre...'. Responda direto, empático e prestativo.`;
 
     const contents = [
-      ...payload.conversationHistory.map((h) => ({
-        role: h.role,
-        parts: [{ text: h.text }]
-      })),
-      {
-        role: 'user',
-        parts: [{ text: `${systemPrompt}\n\nUsuário: ${payload.prompt}` }]
-      }
+      ...payload.conversationHistory.map((h) => ({ role: h.role, parts: [{ text: h.text }] })),
+      { role: 'user', parts: [{ text: `${systemPrompt}\n\nUsuário: ${payload.prompt}` }] }
     ];
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
@@ -134,9 +127,9 @@ Regras fundamentais:
     const codeMatch = rawText.match(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)```/);
     if (codeMatch) {
       const cleanText = rawText.replace(/```(?:[a-zA-Z0-9]+)?\n[\s\S]*?```/, '').trim();
-      return { reply: cleanText || 'Aqui está o exemplo:', codeSnippet: codeMatch[1].trim() };
+      return { reply: cleanText || 'Aqui está o exemplo:', codeSnippet: codeMatch[1].trim(), isFallback: false };
     }
-    return { reply: rawText };
+    return { reply: rawText, isFallback: false };
   }
 }
 

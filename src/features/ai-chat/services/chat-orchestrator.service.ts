@@ -41,7 +41,7 @@ class ChatOrchestratorService {
       };
     }
 
-    // 2. Gemini Pro / Supabase Edge Function with Context & Agent Prompting
+    // 2. Query Live Gemini Pro Model
     const historyPayload = this.memoryContext.recentTurns.flatMap((t) => [
       { role: 'user' as const, text: t.userPrompt },
       { role: 'model' as const, text: t.pythoResponse }
@@ -54,7 +54,7 @@ class ChatOrchestratorService {
       context: this.memoryContext
     });
 
-    if (geminiResponse?.reply) {
+    if (geminiResponse?.reply && !geminiResponse.isFallback) {
       const followUps = geminiResponse.followUpPrompts && geminiResponse.followUpPrompts.length > 0
         ? geminiResponse.followUpPrompts
         : agentPromptsService.generateContextualFollowUps(raw, geminiResponse.reply);
@@ -90,17 +90,17 @@ class ChatOrchestratorService {
 
     // 4. Knowledge Engine Fallback
     const knowledgeResult = aiKnowledgeService.findKnowledgeAnswer(raw);
-    const finalReply = knowledgeResult || {
-      text: `Nossa, concordo plenamente com você! É tão bom bater um papo leve e trocar ideias sobre isso. O que mais você tem feito de bom ultimamente?`
-    };
-    const followUps = agentPromptsService.generateContextualFollowUps(raw, finalReply.text);
+    const textToUse = knowledgeResult?.text || geminiResponse?.reply ||
+      `Nossa, concordo plenamente com você! É tão bom bater um papo leve e trocar ideias sobre isso. O que mais você tem feito de bom ultimamente?`;
+    const snippetToUse = knowledgeResult?.codeSnippet || geminiResponse?.codeSnippet;
+    const followUps = agentPromptsService.generateContextualFollowUps(raw, textToUse);
 
-    this.recordTurn(raw, finalReply.text);
+    this.recordTurn(raw, textToUse);
     return {
       id: generateUuid(),
       sender: 'pytho',
-      text: finalReply.text,
-      codeSnippet: finalReply.codeSnippet,
+      text: textToUse,
+      codeSnippet: snippetToUse,
       followUpPrompts: followUps,
       createdAt: Date.now()
     };

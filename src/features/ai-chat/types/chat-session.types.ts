@@ -32,4 +32,5 @@ export interface GeminiProResult {
   reply: string;
   codeSnippet?: string;
   followUpPrompts?: string[];
+  isFallback?: boolean;
 }
